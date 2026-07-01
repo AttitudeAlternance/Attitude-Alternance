@@ -1,0 +1,53 @@
+import { NextResponse } from "next/server";
+import { generateMessage } from "@/lib/ai/generateMessage";
+import type { MessageTone, MessageType } from "@/lib/types";
+
+// Cette route s'exécute côté serveur : c'est ici que la clé API (si configurée)
+// est utilisée, sans jamais être exposée au navigateur.
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+
+    const {
+      type,
+      company,
+      role,
+      recruiterName,
+      tone,
+      personalInfo,
+      firstName,
+      lastName,
+      formation,
+    } = body as {
+      type: MessageType;
+      company: string;
+      role: string;
+      recruiterName?: string;
+      tone: MessageTone;
+      personalInfo?: string;
+      firstName?: string;
+      lastName?: string;
+      formation?: string;
+    };
+
+    if (!type || !company || !role || !tone) {
+      return NextResponse.json({ error: "Champs manquants." }, { status: 400 });
+    }
+
+    const content = await generateMessage({
+      type,
+      company,
+      role,
+      recruiterName,
+      tone,
+      personalInfo,
+      firstName,
+      lastName,
+      formation,
+    });
+
+    return NextResponse.json({ content });
+  } catch (err) {
+    return NextResponse.json({ error: "Erreur lors de la génération du message." }, { status: 500 });
+  }
+}

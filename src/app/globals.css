@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #F7F7F4;
+  color: #1A1D29;
+}
+
+/* Respecte la préférence utilisateur pour les animations réduites */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus clavier visible partout */
+:focus-visible {
+  outline: 2px solid #2B3A67;
+  outline-offset: 2px;
+}
