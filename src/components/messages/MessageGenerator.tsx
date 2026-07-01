@@ -35,6 +35,7 @@ export function MessageGenerator({ profile, userId, history: initialHistory }: M
   const [recruiterName, setRecruiterName] = useState("");
   const [tone, setTone] = useState<MessageTone>("professionnel");
   const [personalInfo, setPersonalInfo] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -60,6 +61,7 @@ export function MessageGenerator({ profile, userId, history: initialHistory }: M
           recruiterName,
           tone,
           personalInfo,
+          jobDescription,
           firstName: profile?.first_name,
           lastName: profile?.last_name,
           formation: profile?.formation,
@@ -147,6 +149,16 @@ export function MessageGenerator({ profile, userId, history: initialHistory }: M
                 ))}
               </Select>
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="jobDescription">Description du poste (optionnel)</Label>
+            <Textarea
+              id="jobDescription"
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              placeholder="Collez ici le texte de l'annonce trouvée sur le site d'emploi, pour un message plus personnalisé."
+            />
           </div>
 
           <div>

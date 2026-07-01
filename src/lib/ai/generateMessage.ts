@@ -10,6 +10,18 @@ export interface GenerateMessageParams {
   firstName?: string;
   lastName?: string;
   formation?: string;
+  jobDescription?: string;
+}
+
+// Extrait une phrase représentative de l'annonce collée par l'étudiant,
+// pour l'utiliser comme point d'accroche dans le message (sans dépendance IA).
+function extractJobHighlight(jobDescription?: string): string | null {
+  if (!jobDescription) return null;
+  const cleaned = jobDescription.replace(/\s+/g, " ").trim();
+  if (!cleaned) return null;
+  const sentenceMatch = cleaned.match(/^.{20,180}?[\.!?]/);
+  const snippet = sentenceMatch ? sentenceMatch[0].trim() : cleaned.slice(0, 160).trim();
+  return snippet;
 }
 
 /**
@@ -54,7 +66,7 @@ export async function generateMessage(params: GenerateMessageParams): Promise<st
 
 // Construit le prompt qui sera envoyé à une vraie API IA (utile une fois branché)
 export function buildPrompt(params: GenerateMessageParams): string {
-  const { type, company, role, recruiterName, tone, personalInfo, firstName, lastName } = params;
+  const { type, company, role, recruiterName, tone, personalInfo, firstName, lastName, jobDescription } = params;
   return [
     `Rédige un ${labelForType(type)} pour un étudiant qui recherche une alternance.`,
     `Entreprise ciblée : ${company}`,
@@ -63,6 +75,7 @@ export function buildPrompt(params: GenerateMessageParams): string {
     `Ton souhaité : ${tone}`,
     `Signataire : ${[firstName, lastName].filter(Boolean).join(" ") || "L'étudiant"}`,
     personalInfo ? `Informations personnelles à intégrer : ${personalInfo}` : "",
+    jobDescription ? `Texte de l'annonce à utiliser pour personnaliser le message : ${jobDescription}` : "",
     "Le texte doit être prêt à copier-coller, sans placeholder du type [xxx].",
   ]
     .filter(Boolean)
@@ -98,34 +111,56 @@ function generatePlaceholderMessage(params: GenerateMessageParams): string {
     firstName,
     lastName,
     formation,
+    jobDescription,
   } = params;
 
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Prénom Nom";
   const greetingName = recruiterName ? recruiterName : "Madame, Monsieur";
   const politeOpen = tone === "chaleureux" ? `Bonjour ${greetingName},` : `Bonjour${recruiterName ? ` ${recruiterName}` : ""},`;
   const signatureBlock = [fullName, formation ? formation : ""].filter(Boolean).join("\n");
+  const jobHighlight = extractJobHighlight(jobDescription);
 
   switch (type) {
-    case "candidature":
+    case "candidature": {
+      const intro = toneSentence(
+        tone,
+        `Je me permets de vous contacter concernant une opportunité d'alternance en tant que ${role} au sein de ${company}.`,
+        `Je vous écris pour candidater directement au poste de ${role} chez ${company}, qui correspond exactement à ce que je recherche.`,
+        `C'est avec grand enthousiasme que je me tourne vers ${company} pour vous proposer ma candidature au poste de ${role} en alternance.`
+      );
+
+      const jobLink = jobHighlight
+        ? `Votre annonce précise notamment : « ${jobHighlight} » — un point qui correspond directement à mon profil et à ce que je souhaite développer en alternance.`
+        : null;
+
+      const formationLine = formation
+        ? `Actuellement en ${formation}, je recherche une alternance me permettant de mettre en pratique mes compétences tout en continuant à me former sur le terrain.`
+        : `Je recherche actuellement une alternance me permettant de mettre en pratique mes compétences tout en continuant à me former sur le terrain.`;
+
+      const skillsLine = personalInfo
+        ? `Concrètement, ${personalInfo.charAt(0).toLowerCase()}${personalInfo.slice(1)}`
+        : null;
+
+      const motivationLine = `Rejoindre ${company} représente pour moi une réelle opportunité de contribuer à vos projets tout en progressant au contact d'une équipe expérimentée.`;
+
       return [
         politeOpen,
         "",
-        toneSentence(
-          tone,
-          `Je me permets de vous contacter concernant une opportunité d'alternance en tant que ${role} au sein de ${company}.`,
-          `Je vous écris pour candidater directement au poste de ${role} chez ${company}, qui correspond exactement à ce que je recherche.`,
-          `C'est avec grand enthousiasme que je me tourne vers ${company} pour vous proposer ma candidature au poste de ${role} en alternance.`
-        ),
-        formation
-          ? `Actuellement en ${formation}, je recherche une alternance me permettant de mettre en pratique mes compétences tout en continuant à apprendre sur le terrain.`
-          : `Je recherche actuellement une alternance me permettant de mettre en pratique mes compétences tout en continuant à me former.`,
-        personalInfo ? personalInfo : "Je serais ravi(e) de vous présenter mon parcours et ma motivation lors d'un entretien.",
+        intro,
+        jobLink,
+        formationLine,
+        skillsLine,
+        motivationLine,
         "",
-        "Je reste disponible pour échanger à votre convenance et vous remercie par avance pour l'attention portée à ma candidature.",
+        "Je me tiens à votre disposition pour un entretien afin de vous présenter plus en détail mon parcours et ma motivation.",
+        "Je vous remercie par avance pour l'attention portée à ma candidature et reste dans l'attente de votre retour.",
         "",
         "Cordialement,",
         signatureBlock,
-      ].join("\n");
+      ]
+        .filter(Boolean)
+        .join("\n");
+    }
 
     case "relance":
       return [

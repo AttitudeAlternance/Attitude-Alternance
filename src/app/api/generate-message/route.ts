@@ -18,6 +18,7 @@ export async function POST(request: Request) {
       firstName,
       lastName,
       formation,
+      jobDescription,
     } = body as {
       type: MessageType;
       company: string;
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
       firstName?: string;
       lastName?: string;
       formation?: string;
+      jobDescription?: string;
     };
 
     if (!type || !company || !role || !tone) {
@@ -44,6 +46,7 @@ export async function POST(request: Request) {
       firstName,
       lastName,
       formation,
+      jobDescription,
     });
 
     return NextResponse.json({ content });
