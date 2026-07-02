@@ -17,7 +17,7 @@ export function AuthLayout({
       <div className="w-full max-w-md">
         <Link href="/" className="mb-8 flex items-center justify-center gap-2">
           <Logo />
-          <span className="font-display text-base font-semibold text-ink">AlternanceBoost</span>
+          <span className="font-display text-base font-semibold text-ink">Attitude Alternance</span>
         </Link>
 
         <div className="rounded-2xl border border-line bg-white p-7 shadow-card">

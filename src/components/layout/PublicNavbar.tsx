@@ -7,7 +7,7 @@ export function PublicNavbar() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
           <Logo />
-          <span className="font-display text-base font-semibold text-ink">AlternanceBoost</span>
+          <span className="font-display text-base font-semibold text-ink">Attitude Alternance</span>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">

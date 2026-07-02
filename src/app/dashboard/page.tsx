@@ -4,8 +4,14 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/Badge";
-import { formatDate, isOverdue, isDueToday } from "@/lib/utils";
+import { WeeklyGoalCard } from "@/components/dashboard/WeeklyGoalCard";
+import { formatDate, isOverdue, isDueToday, isThisWeek } from "@/lib/utils";
 import type { Application } from "@/lib/types";
+
+// Empêche la mise en cache de cette page : les statistiques doivent toujours
+// refléter les dernières candidatures ajoutées, même juste après une modification.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -13,7 +19,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("first_name")
+    .select("first_name, weekly_goal")
     .eq("id", userData.user?.id)
     .maybeSingle();
 
@@ -30,6 +36,7 @@ export default async function DashboardPage() {
   const followupsDue = apps.filter(
     (a) => a.next_followup_at && (isDueToday(a.next_followup_at) || isOverdue(a.next_followup_at))
   );
+  const thisWeekCount = apps.filter((a) => isThisWeek(a.applied_at ?? a.created_at)).length;
 
   const stats = [
     { label: "Candidatures envoyées", value: sent },
@@ -123,6 +130,12 @@ export default async function DashboardPage() {
           </div>
         </Card>
       </div>
+
+      <WeeklyGoalCard
+        userId={userData.user?.id ?? ""}
+        initialGoal={profile?.weekly_goal ?? 5}
+        currentCount={thisWeekCount}
+      />
     </div>
   );
 }

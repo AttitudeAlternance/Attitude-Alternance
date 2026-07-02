@@ -1,4 +1,4 @@
-# AlternanceBoost
+# Attitude Alternance
 
 Application SaaS complète d'accompagnement à la recherche d'alternance : suivi des candidatures (CRM), génération de messages par IA, rappels de relance et espace personnel étudiant.
 
@@ -110,6 +110,7 @@ L'application est disponible sur [http://localhost:3000](http://localhost:3000).
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `ANTHROPIC_API_KEY` (fortement recommandé pour une génération IA et une lecture de CV de qualité)
+   - `HUNTER_API_KEY` (optionnel, pour une recherche d'email vérifiée)
 4. Déployez. Vercel détecte automatiquement Next.js, aucune configuration supplémentaire n'est nécessaire.
 5. Dans Supabase, ajoutez l'URL de production dans **Authentication > URL Configuration** (Site URL + Redirect URLs) afin que la confirmation d'email et les redirections fonctionnent correctement en production.
 
@@ -117,8 +118,8 @@ L'application est disponible sur [http://localhost:3000](http://localhost:3000).
 
 - **Landing page** : promesse, problème/solution, bénéfices, fonctionnement, tarifs, FAQ.
 - **Authentification** : inscription, connexion, déconnexion via Supabase Auth ; routes `/dashboard/*` protégées par middleware.
-- **Dashboard** : statistiques (candidatures envoyées, en attente, entretiens, relances à faire) et accès rapides.
-- **CRM de candidatures** : ajout, modification, suppression, filtre par statut, tri par date, mise en évidence des relances dues ou en retard.
+- **Dashboard** : statistiques (candidatures envoyées, en attente, entretiens, relances à faire), objectif hebdomadaire de candidatures paramétrable avec barre de progression, et accès rapides.
+- **CRM de candidatures** : ajout, modification, suppression, filtre par statut, tri par date, mise en évidence des relances dues ou en retard, recherche d'email de contact (schémas courants, ou vérifié via Hunter.io si configuré).
 - **Générateur de messages IA** : mail de candidature, mail de relance, message LinkedIn, mail de remerciement — rédigés par Claude (si clé configurée) en tenant compte de l'annonce et du CV, avec choix du ton et historique des messages générés.
 - **Lecture de CV** : dépôt d'un CV au format PDF, extraction et résumé automatique du profil (formation, compétences, expériences), réutilisé pour personnaliser les messages générés.
 - **Ressources** : conseils CV, LinkedIn, entretien, méthode de relance, organisation, exemples de messages.

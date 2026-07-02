@@ -33,7 +33,7 @@ export function AppNavbar({ email }: AppNavbarProps) {
         </svg>
       </button>
 
-      <span className="font-display text-sm font-semibold text-ink">AlternanceBoost</span>
+      <span className="font-display text-sm font-semibold text-ink">Attitude Alternance</span>
 
       <Button variant="ghost" size="sm" onClick={handleLogout}>
         Déconnexion

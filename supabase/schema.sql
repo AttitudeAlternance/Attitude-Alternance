@@ -1,5 +1,5 @@
 -- ============================================================================
--- Schéma Supabase — AlternanceBoost
+-- Schéma Supabase — Attitude Alternance
 -- À exécuter dans l'éditeur SQL de votre projet Supabase (SQL Editor > New query)
 -- ============================================================================
 

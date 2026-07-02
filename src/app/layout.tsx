@@ -7,9 +7,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], variable: "--font-mono", weight: ["400", "500"] });
 
 export const metadata: Metadata = {
-  title: "AlternanceBoost — Trouvez votre alternance plus vite",
+  title: "Attitude Alternance — Trouvez votre alternance plus vite",
   description:
-    "AlternanceBoost accompagne les étudiants dans leur recherche d'alternance : suivi des candidatures, messages générés par IA et relances automatiques.",
+    "Attitude Alternance accompagne les étudiants dans leur recherche d'alternance : suivi des candidatures, messages générés par IA et relances automatiques.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

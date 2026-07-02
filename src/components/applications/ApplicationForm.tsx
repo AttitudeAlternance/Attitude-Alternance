@@ -42,9 +42,56 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
       : emptyValue
   );
   const [loading, setLoading] = useState(false);
+  const [emailDomain, setEmailDomain] = useState("");
+  const [findingEmail, setFindingEmail] = useState(false);
+  const [emailAlternatives, setEmailAlternatives] = useState<string[]>([]);
+  const [emailConfidence, setEmailConfidence] = useState<"verifiee" | "estimee" | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   function update<K extends keyof ApplicationInput>(key: K, value: ApplicationInput[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handleFindEmail() {
+    setEmailError(null);
+    setEmailAlternatives([]);
+    setEmailConfidence(null);
+
+    const nameParts = (values.linkedin_contact ?? "").trim().split(/\s+/);
+    if (!emailDomain.trim()) {
+      setEmailError("Renseignez le domaine du site de l'entreprise (ex : entreprise.fr).");
+      return;
+    }
+    if (nameParts.length < 2) {
+      setEmailError("Renseignez le prénom et le nom du contact dans le champ ci-dessus (ex : Sophie Martin).");
+      return;
+    }
+
+    const [firstName, ...rest] = nameParts;
+    const lastName = rest.join(" ");
+
+    setFindingEmail(true);
+    try {
+      const res = await fetch("/api/find-email", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ domain: emailDomain, firstName, lastName }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setEmailError(data.error || "Recherche impossible.");
+        return;
+      }
+
+      update("contact_email", data.best.email);
+      setEmailConfidence(data.best.confidence);
+      setEmailAlternatives(data.alternatives ?? []);
+    } catch {
+      setEmailError("Une erreur est survenue lors de la recherche.");
+    } finally {
+      setFindingEmail(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -148,6 +195,60 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
             placeholder="contact@entreprise.com"
           />
         </div>
+      </div>
+
+      <div className="rounded-xl border border-dashed border-line bg-paper/60 p-4">
+        <p className="text-sm font-medium text-ink">🔍 Trouver l&apos;email du contact</p>
+        <p className="mt-1 text-xs text-muted">
+          Renseignez le prénom et nom du contact ci-dessus, puis le domaine du site de l&apos;entreprise.
+        </p>
+        <div className="mt-3 flex flex-wrap items-end gap-2">
+          <div className="flex-1 min-w-[180px]">
+            <Label htmlFor="email_domain">Domaine de l&apos;entreprise</Label>
+            <Input
+              id="email_domain"
+              value={emailDomain}
+              onChange={(e) => setEmailDomain(e.target.value)}
+              placeholder="Ex : bnpparibas.fr"
+            />
+          </div>
+          <Button type="button" variant="secondary" onClick={handleFindEmail} disabled={findingEmail}>
+            {findingEmail ? "Recherche..." : "Trouver l'email"}
+          </Button>
+        </div>
+
+        {emailError && <p className="mt-2 text-xs text-danger">{emailError}</p>}
+
+        {emailConfidence && (
+          <div className="mt-3 rounded-lg bg-white p-3">
+            <p className="text-xs font-medium text-ink">
+              {emailConfidence === "verifiee" ? (
+                <span className="text-success">✓ Adresse trouvée et vérifiée — insérée dans le champ ci-dessus.</span>
+              ) : (
+                <span className="text-warn">
+                  ⚠ Adresse estimée à partir des schémas d&apos;emails les plus courants (non vérifiée) — insérée dans le champ ci-dessus, à confirmer avant envoi.
+                </span>
+              )}
+            </p>
+            {emailAlternatives.length > 0 && (
+              <div className="mt-2">
+                <p className="text-xs text-muted">Autres possibilités :</p>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {emailAlternatives.map((alt) => (
+                    <button
+                      type="button"
+                      key={alt}
+                      onClick={() => update("contact_email", alt)}
+                      className="rounded-full border border-line px-2.5 py-1 text-xs text-ink/80 hover:border-primary-200 hover:bg-primary-50"
+                    >
+                      {alt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div>

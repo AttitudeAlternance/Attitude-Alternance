@@ -74,6 +74,7 @@ export interface Profile {
   cv_text: string | null;
   cv_summary: string | null;
   cv_uploaded_at: string | null;
+  weekly_goal: number;
   created_at: string;
   updated_at: string;
 }

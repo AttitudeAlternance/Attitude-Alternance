@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { ApplicationsBoard } from "@/components/applications/ApplicationsBoard";
 import type { Application } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function ApplicationsPage() {
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();

@@ -28,10 +28,10 @@ export function Footer() {
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6">
         <div className="flex items-center gap-2">
           <Logo />
-          <span className="font-display text-sm font-semibold text-ink">AlternanceBoost</span>
+          <span className="font-display text-sm font-semibold text-ink">Attitude Alternance</span>
         </div>
         <p className="text-xs text-muted">
-          © {new Date().getFullYear()} AlternanceBoost. Fait pour les étudiants en alternance.
+          © {new Date().getFullYear()} Attitude Alternance. Fait pour les étudiants en alternance.
         </p>
       </div>
     </footer>

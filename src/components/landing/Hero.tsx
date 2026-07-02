@@ -21,7 +21,7 @@ export function Hero() {
             Trouvez votre alternance plus vite, sans perdre le fil.
           </h1>
           <p className="mt-5 max-w-md text-base text-muted sm:text-lg">
-            AlternanceBoost centralise vos candidatures, rédige vos mails avec l&apos;IA
+            Attitude Alternance centralise vos candidatures, rédige vos mails avec l&apos;IA
             et vous rappelle qui relancer, au bon moment.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">

@@ -41,7 +41,7 @@ export function ProblemSolution() {
             Un espace unique pour piloter toute votre recherche.
           </h2>
           <p className="mt-6 text-sm text-muted">
-            AlternanceBoost regroupe le suivi de vos candidatures, la rédaction de vos messages et vos
+            Attitude Alternance regroupe le suivi de vos candidatures, la rédaction de vos messages et vos
             rappels de relance dans une seule interface, pensée pour aller plus vite sans rien oublier.
           </p>
           <div className="mt-6 rounded-2xl border border-line bg-primary-50 p-5">

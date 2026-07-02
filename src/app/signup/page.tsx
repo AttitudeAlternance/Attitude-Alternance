@@ -68,7 +68,7 @@ export default function SignupPage() {
   return (
     <AuthLayout
       title="Créer votre compte"
-      description="Rejoignez AlternanceBoost et structurez votre recherche dès aujourd'hui."
+      description="Rejoignez Attitude Alternance et structurez votre recherche dès aujourd'hui."
       footer={
         <>
           Déjà un compte ?{" "}

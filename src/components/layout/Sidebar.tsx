@@ -24,7 +24,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
     <div className="flex h-full flex-col gap-6 p-4">
       <Link href="/" className="flex items-center gap-2 px-2 pt-2">
         <Logo />
-        <span className="font-display text-base font-semibold text-ink">AlternanceBoost</span>
+        <span className="font-display text-base font-semibold text-ink">Attitude Alternance</span>
       </Link>
 
       <nav className="flex flex-1 flex-col gap-1">

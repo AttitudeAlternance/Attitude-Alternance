@@ -4,7 +4,7 @@ import { useState } from "react";
 
 const faqs = [
   {
-    q: "AlternanceBoost trouve-t-il des offres d'alternance à ma place ?",
+    q: "Attitude Alternance trouve-t-il des offres d'alternance à ma place ?",
     a: "Non : l'outil vous aide à organiser et accélérer votre recherche (suivi, messages, relances), mais ce sont vos candidatures que vous ajoutez et pilotez vous-même.",
   },
   {
@@ -12,7 +12,7 @@ const faqs = [
     a: "Oui, chaque message tient compte de l'entreprise, du poste, du recruteur si renseigné, du ton choisi et de vos informations personnelles.",
   },
   {
-    q: "Puis-je utiliser AlternanceBoost sur mobile ?",
+    q: "Puis-je utiliser Attitude Alternance sur mobile ?",
     a: "Oui, l'interface est entièrement responsive et fonctionne aussi bien sur ordinateur que sur smartphone.",
   },
   {
