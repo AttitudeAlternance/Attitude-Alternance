@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { formatDate, isDueToday, isOverdue, cn } from "@/lib/utils";
@@ -76,6 +77,11 @@ export function ApplicationsTable({ applications, onEdit, onDelete }: Applicatio
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex justify-end gap-1.5">
+                    <Link href={`/dashboard/messages?applicationId=${app.id}`}>
+                      <Button size="sm" variant="secondary">
+                        ✦ Générer un message
+                      </Button>
+                    </Link>
                     <Button size="sm" variant="ghost" onClick={() => onEdit(app)}>
                       Modifier
                     </Button>

@@ -21,6 +21,7 @@ const emptyValue: ApplicationInput = {
   contact_email: "",
   next_followup_at: "",
   comment: "",
+  job_description: "",
 };
 
 export function ApplicationForm({ initialValue, onSubmit, onCancel }: ApplicationFormProps) {
@@ -36,6 +37,7 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
           contact_email: initialValue.contact_email ?? "",
           next_followup_at: initialValue.next_followup_at ?? "",
           comment: initialValue.comment ?? "",
+          job_description: initialValue.job_description ?? "",
         }
       : emptyValue
   );
@@ -57,6 +59,7 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
         contact_email: values.contact_email || null,
         next_followup_at: values.next_followup_at || null,
         comment: values.comment || null,
+        job_description: values.job_description || null,
       } as ApplicationInput);
     } finally {
       setLoading(false);
@@ -156,6 +159,20 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
           onChange={(e) => update("next_followup_at", e.target.value)}
         />
         <FieldHint>Cette candidature sera mise en évidence à cette date si aucune réponse n&apos;a été notée.</FieldHint>
+      </div>
+
+      <div>
+        <Label htmlFor="job_description">Description de l&apos;offre</Label>
+        <Textarea
+          id="job_description"
+          value={values.job_description ?? ""}
+          onChange={(e) => update("job_description", e.target.value)}
+          placeholder="Collez ici le texte complet de l'offre trouvée sur le site d'emploi (missions, profil recherché...)."
+          className="min-h-[140px]"
+        />
+        <FieldHint>
+          Cette description sera automatiquement proposée au générateur de messages IA lorsque vous lierez cette candidature, pour des messages plus pertinents.
+        </FieldHint>
       </div>
 
       <div>

@@ -20,6 +20,8 @@ export async function POST(request: Request) {
       formation,
       jobDescription,
       cvSummary,
+      previousMessage,
+      variantSeed,
     } = body as {
       type: MessageType;
       company: string;
@@ -32,6 +34,8 @@ export async function POST(request: Request) {
       formation?: string;
       jobDescription?: string;
       cvSummary?: string;
+      previousMessage?: string;
+      variantSeed?: number;
     };
 
     if (!type || !company || !role || !tone) {
@@ -50,6 +54,8 @@ export async function POST(request: Request) {
       formation,
       jobDescription,
       cvSummary,
+      previousMessage,
+      variantSeed,
     });
 
     return NextResponse.json({ content: result.content, usedRealAi: result.usedRealAi });

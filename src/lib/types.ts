@@ -49,6 +49,7 @@ export interface Application {
   contact_email: string | null;
   next_followup_at: string | null;
   comment: string | null;
+  job_description: string | null;
   created_at: string;
   updated_at: string;
 }

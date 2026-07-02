@@ -12,6 +12,8 @@ export interface GenerateMessageParams {
   formation?: string;
   jobDescription?: string;
   cvSummary?: string;
+  previousMessage?: string;
+  variantSeed?: number;
 }
 
 export interface GenerateMessageResult {
@@ -117,6 +119,9 @@ export function buildPrompt(params: GenerateMessageParams): string {
     cvSummary
       ? `Résumé du profil du candidat extrait de son CV (utilise-le pour choisir les compétences/expériences les plus pertinentes par rapport au poste) :\n"""\n${cvSummary}\n"""`
       : "",
+    params.previousMessage
+      ? `Voici une version déjà proposée précédemment :\n"""\n${params.previousMessage}\n"""\nL'étudiant souhaite une autre proposition. Garde les mêmes informations de fond et le même ton, mais varie clairement la formulation, l'angle d'accroche ou l'organisation des idées, pour que ce ne soit pas une simple reformulation de surface.`
+      : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -195,7 +200,10 @@ function generatePlaceholderMessage(params: GenerateMessageParams): string {
     formation,
     jobDescription,
     cvSummary,
+    variantSeed,
   } = params;
+
+  const variant = (variantSeed ?? 0) % 2;
 
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Prénom Nom";
   const greetingName = recruiterName ? recruiterName : "Madame, Monsieur";
@@ -206,12 +214,19 @@ function generatePlaceholderMessage(params: GenerateMessageParams): string {
 
   switch (type) {
     case "candidature": {
-      const intro = toneSentence(
-        tone,
-        `Je me permets de vous contacter concernant une opportunité d'alternance en tant que ${role} au sein de ${company}.`,
-        `Je vous écris pour candidater directement au poste de ${role} chez ${company}, qui correspond exactement à ce que je recherche.`,
-        `C'est avec grand enthousiasme que je me tourne vers ${company} pour vous proposer ma candidature au poste de ${role} en alternance.`
-      );
+      const intro = variant === 0
+        ? toneSentence(
+            tone,
+            `Je me permets de vous contacter concernant une opportunité d'alternance en tant que ${role} au sein de ${company}.`,
+            `Je vous écris pour candidater directement au poste de ${role} chez ${company}, qui correspond exactement à ce que je recherche.`,
+            `C'est avec grand enthousiasme que je me tourne vers ${company} pour vous proposer ma candidature au poste de ${role} en alternance.`
+          )
+        : toneSentence(
+            tone,
+            `Votre offre de ${role} chez ${company} a retenu toute mon attention, et je souhaite vous soumettre ma candidature en alternance.`,
+            `Je candidate au poste de ${role} chez ${company} : le profil recherché correspond précisément à ce que je peux apporter.`,
+            `${company} est une entreprise qui m'inspire, et c'est avec plaisir que je vous adresse ma candidature pour le poste de ${role} en alternance.`
+          );
 
       const jobLink = jobHighlight
         ? `Votre annonce précise notamment que ${jobHighlight.charAt(0).toLowerCase()}${jobHighlight.slice(1).replace(/[.!?]+$/, "")} — un aspect qui correspond directement à mon profil et à ce que je souhaite développer en alternance.`
@@ -227,7 +242,9 @@ function generatePlaceholderMessage(params: GenerateMessageParams): string {
           ? `Concrètement, ${personalInfo.charAt(0).toLowerCase()}${personalInfo.slice(1)}`
           : null;
 
-      const motivationLine = `Rejoindre ${company} représente pour moi une réelle opportunité de contribuer à vos projets tout en progressant au contact d'une équipe expérimentée.`;
+      const motivationLine = variant === 0
+        ? `Rejoindre ${company} représente pour moi une réelle opportunité de contribuer à vos projets tout en progressant au contact d'une équipe expérimentée.`
+        : `Intégrer ${company} me permettrait de mettre mes compétences au service de vos projets, tout en continuant à progresser aux côtés d'une équipe expérimentée.`;
 
       return [
         politeOpen,
