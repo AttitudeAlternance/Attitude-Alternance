@@ -83,7 +83,7 @@ Règles impératives :
 - Ne mets aucun placeholder du type [xxx] : le texte doit être prêt à copier-coller tel quel.
 - Ne mets pas de titre ni d'objet, uniquement le corps du message.
 - Respecte le ton demandé (professionnel, direct, ou chaleureux) sans devenir excessif dans un sens ou dans l'autre.
-- Le message doit rester impactant : privilégie 2 à 4 paragraphes courts plutôt qu'un long pavé.`;
+- Le message doit rester impactant et adapter sa longueur au canal : un mail (candidature, relance, remerciement) peut compter plusieurs paragraphes courts, un message LinkedIn doit rester court et direct. Les consignes de format données plus bas dans le message priment sur cette règle générale.`;
 
 // Construit le prompt envoyé à l'IA, avec tout le contexte disponible.
 export function buildPrompt(params: GenerateMessageParams): string {
@@ -103,6 +103,7 @@ export function buildPrompt(params: GenerateMessageParams): string {
 
   return [
     `Rédige un ${labelForType(type)} pour un étudiant qui recherche une alternance.`,
+    typeSpecificInstruction(type),
     `Entreprise ciblée : ${company}`,
     `Poste visé : ${role}`,
     recruiterName ? `Recruteur destinataire : ${recruiterName}` : "Pas de nom de recruteur connu — utilise une formule de politesse neutre.",
@@ -119,6 +120,22 @@ export function buildPrompt(params: GenerateMessageParams): string {
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+// Consignes propres à chaque type de message, pour éviter un rendu uniforme
+// quel que soit le canal ou le contexte (un LinkedIn n'est pas un mail, un
+// remerciement post-entretien n'a pas besoin de revendre le CV).
+function typeSpecificInstruction(type: MessageType): string {
+  switch (type) {
+    case "candidature":
+      return "Format attendu : longueur d'un vrai mail de candidature (plusieurs paragraphes courts), qui développe sincèrement le lien entre le profil et le poste.";
+    case "linkedin":
+      return "Format attendu : message LinkedIn court (3 à 5 phrases, pas de formule de politesse type mail), mais qui prend quand même le temps de faire un vrai lien entre le profil du candidat et le poste, dans les grandes lignes — évite une phrase unique et vague, sans pour autant écrire un mail complet.";
+    case "remerciement":
+      return "Format attendu : mail de remerciement post-entretien. Ne reviens pas sur les compétences ou l'expérience du candidat (déjà évoquées pendant l'entretien) : concentre-toi sur la qualité de l'échange, la motivation confirmée pour le poste, et la suite attendue.";
+    case "relance":
+      return "Format attendu : mail de relance court et courtois, qui rappelle la candidature sans la réexpliquer en détail.";
+  }
 }
 
 function labelForType(type: MessageType) {

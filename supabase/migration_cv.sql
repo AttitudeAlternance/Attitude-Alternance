@@ -15,18 +15,22 @@ values ('cvs', 'cvs', false)
 on conflict (id) do nothing;
 
 -- Chaque étudiant ne peut lire/écrire que dans son propre dossier (nommé avec son user id)
-create policy if not exists "cv_select_own"
+drop policy if exists "cv_select_own" on storage.objects;
+create policy "cv_select_own"
   on storage.objects for select
   using (bucket_id = 'cvs' and auth.uid()::text = (storage.foldername(name))[1]);
 
-create policy if not exists "cv_insert_own"
+drop policy if exists "cv_insert_own" on storage.objects;
+create policy "cv_insert_own"
   on storage.objects for insert
   with check (bucket_id = 'cvs' and auth.uid()::text = (storage.foldername(name))[1]);
 
-create policy if not exists "cv_update_own"
+drop policy if exists "cv_update_own" on storage.objects;
+create policy "cv_update_own"
   on storage.objects for update
   using (bucket_id = 'cvs' and auth.uid()::text = (storage.foldername(name))[1]);
 
-create policy if not exists "cv_delete_own"
+drop policy if exists "cv_delete_own" on storage.objects;
+create policy "cv_delete_own"
   on storage.objects for delete
   using (bucket_id = 'cvs' and auth.uid()::text = (storage.foldername(name))[1]);
