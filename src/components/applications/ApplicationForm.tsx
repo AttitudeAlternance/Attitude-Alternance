@@ -53,6 +53,9 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
   const [emailConfidence, setEmailConfidence] = useState<"verifiee" | "estimee" | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
+  const [fetchingOffer, setFetchingOffer] = useState(false);
+  const [fetchOfferError, setFetchOfferError] = useState<string | null>(null);
+  const [fetchOfferSuccess, setFetchOfferSuccess] = useState(false);
 
   function update<K extends keyof ApplicationInput>(key: K, value: ApplicationInput[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -109,6 +112,39 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
     await navigator.clipboard.writeText(allEmails.join(", "));
     setCopiedAll(true);
     setTimeout(() => setCopiedAll(false), 2500);
+  }
+
+  async function handleFetchOffer() {
+    setFetchOfferError(null);
+    setFetchOfferSuccess(false);
+
+    if (!values.offer_url) {
+      setFetchOfferError("Renseignez d'abord le lien de l'offre ci-dessus.");
+      return;
+    }
+
+    setFetchingOffer(true);
+    try {
+      const res = await fetch("/api/fetch-offer", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url: values.offer_url }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setFetchOfferError(data.error || "Récupération impossible.");
+        return;
+      }
+
+      update("job_description", data.text);
+      setFetchOfferSuccess(true);
+      setShowDetails(true);
+    } catch {
+      setFetchOfferError("Une erreur est survenue. Copiez-collez le texte de l'offre manuellement.");
+    } finally {
+      setFetchingOffer(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -199,13 +235,29 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
 
           <div>
             <Label htmlFor="offer_url">Lien de l&apos;offre</Label>
-            <Input
-              id="offer_url"
-              type="url"
-              value={values.offer_url ?? ""}
-              onChange={(e) => update("offer_url", e.target.value)}
-              placeholder="https://..."
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                id="offer_url"
+                type="url"
+                value={values.offer_url ?? ""}
+                onChange={(e) => update("offer_url", e.target.value)}
+                placeholder="https://..."
+                className="flex-1 min-w-[200px]"
+              />
+              <Button type="button" variant="secondary" size="sm" onClick={handleFetchOffer} disabled={fetchingOffer}>
+                {fetchingOffer ? "Lecture..." : "↓ Récupérer automatiquement"}
+              </Button>
+            </div>
+            {fetchOfferError && <p className="mt-1.5 text-xs text-warn">{fetchOfferError}</p>}
+            {fetchOfferSuccess && (
+              <p className="mt-1.5 text-xs text-success">
+                ✓ Texte récupéré et ajouté dans "Description de l&apos;offre" ci-dessous — vérifiez qu&apos;il est correct.
+              </p>
+            )}
+            <FieldHint>
+              Fonctionne sur la plupart des pages carrière d&apos;entreprise. Ne fonctionne pas sur LinkedIn, Indeed ou
+              Welcome to the Jungle (ces sites bloquent la récupération automatique) : collez le texte manuellement dans ce cas.
+            </FieldHint>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

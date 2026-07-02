@@ -119,7 +119,7 @@ L'application est disponible sur [http://localhost:3000](http://localhost:3000).
 - **Landing page** : promesse, problème/solution, bénéfices, fonctionnement, tarifs, FAQ.
 - **Authentification** : inscription, connexion, déconnexion via Supabase Auth ; routes `/dashboard/*` protégées par middleware.
 - **Dashboard** : statistiques (candidatures envoyées, en attente, entretiens, relances à faire), objectif hebdomadaire de candidatures paramétrable avec barre de progression, et accès rapides.
-- **CRM de candidatures** : ajout, modification, suppression, filtre par statut, tri par date, mise en évidence des relances dues ou en retard, recherche d'email de contact (schémas courants, ou vérifié via Hunter.io si configuré).
+- **CRM de candidatures** : ajout, modification, suppression, filtre par statut, tri par date, mise en évidence des relances dues ou en retard, recherche d'email de contact (schémas courants, ou vérifié via Hunter.io si configuré), récupération automatique du texte d'une offre depuis son lien (fonctionne sur la plupart des pages carrière d'entreprise, pas sur LinkedIn/Indeed/Welcome to the Jungle qui bloquent ce type de récupération).
 - **Générateur de messages IA** : mail de candidature, mail de relance, message LinkedIn, mail de remerciement — rédigés par Claude (si clé configurée) en tenant compte de l'annonce et du CV, avec choix du ton et historique des messages générés.
 - **Lecture de CV** : dépôt d'un CV au format PDF, extraction et résumé automatique du profil (formation, compétences, expériences), réutilisé pour personnaliser les messages générés.
 - **Ressources** : conseils CV, LinkedIn, entretien, méthode de relance, organisation, exemples de messages.
