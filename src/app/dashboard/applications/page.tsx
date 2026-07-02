@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { ApplicationsBoard } from "@/components/applications/ApplicationsBoard";
+import { FREE_APPLICATIONS_LIMIT } from "@/lib/plan";
 import type { Application } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,12 @@ export default async function ApplicationsPage() {
     .select("*")
     .order("created_at", { ascending: false });
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("plan, cv_summary")
+    .eq("id", userData.user?.id)
+    .maybeSingle();
+
   return (
     <div>
       <div className="mb-6">
@@ -26,6 +33,9 @@ export default async function ApplicationsPage() {
       <ApplicationsBoard
         initialApplications={(applications ?? []) as Application[]}
         userId={userData.user?.id ?? ""}
+        plan={(profile?.plan as "free" | "premium") ?? "free"}
+        freeLimit={FREE_APPLICATIONS_LIMIT}
+        cvSummary={profile?.cv_summary ?? null}
       />
     </div>
   );

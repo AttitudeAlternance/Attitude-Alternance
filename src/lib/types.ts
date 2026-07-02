@@ -75,6 +75,12 @@ export interface Profile {
   cv_summary: string | null;
   cv_uploaded_at: string | null;
   weekly_goal: number;
+  plan: "free" | "premium";
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  ai_calls_today: number;
+  ai_calls_reset_at: string;
+  email: string | null;
   created_at: string;
   updated_at: string;
 }

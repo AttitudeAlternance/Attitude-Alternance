@@ -13,7 +13,7 @@ const plans = [
   },
   {
     name: "Étudiant+",
-    price: "6€",
+    price: "5,99€",
     period: "/mois",
     description: "Pour une recherche intensive, sans limite.",
     features: [

@@ -59,9 +59,12 @@ npm install
    - la table `generated_messages` (historique des messages générés) ;
    - les triggers (mise à jour de `updated_at`, création automatique d'un profil à l'inscription) ;
    - les policies **Row Level Security** : chaque utilisateur ne voit et ne modifie que ses propres données.
-3. Exécutez ensuite [`supabase/migration_cv.sql`](./supabase/migration_cv.sql) (dans une nouvelle requête SQL) pour activer la lecture de CV :
-   - ajoute les colonnes `cv_file_path`, `cv_text`, `cv_summary`, `cv_uploaded_at` à `profiles` ;
-   - crée un bucket de stockage privé `cvs` avec des policies garantissant que chaque étudiant n'accède qu'à son propre CV.
+3. Exécutez ensuite, dans l'ordre, chaque fichier de migration présent dans `supabase/` (un par un, dans une nouvelle requête SQL à chaque fois) :
+   - `migration_cv.sql` — lecture de CV (colonnes + bucket de stockage)
+   - `migration_job_description.sql` — description de l'offre par candidature
+   - `migration_weekly_goal.sql` — objectif hebdomadaire de candidatures
+   - `migration_plan_and_usage.sql` — plan Étudiant+, quotas IA, identifiants Stripe
+   - `migration_profile_email.sql` — email dans le profil (nécessaire aux rappels par email)
 4. Dans **Authentication > Providers**, l'authentification par email/mot de passe est active par défaut.
    - Pour du développement rapide, vous pouvez désactiver « Confirm email » dans **Authentication > Settings** afin de tester sans avoir à confirmer chaque compte.
 5. Récupérez vos clés dans **Project Settings > API** :
@@ -109,21 +112,46 @@ L'application est disponible sur [http://localhost:3000](http://localhost:3000).
 3. Renseignez les variables d'environnement (les mêmes que dans `.env.local`) dans **Settings > Environment Variables** :
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `ANTHROPIC_API_KEY` (fortement recommandé pour une génération IA et une lecture de CV de qualité)
-   - `HUNTER_API_KEY` (optionnel, pour une recherche d'email vérifiée)
-4. Déployez. Vercel détecte automatiquement Next.js, aucune configuration supplémentaire n'est nécessaire.
+   - `ANTHROPIC_API_KEY` (fortement recommandé)
+   - `SUPABASE_SERVICE_ROLE_KEY` et `CRON_SECRET` (pour les rappels de relance)
+   - `RESEND_API_KEY` et `RESEND_FROM_EMAIL` (optionnel, envoi réel des rappels par email)
+   - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID` (optionnel, paiement Étudiant+)
+4. Déployez. Vercel détecte automatiquement Next.js **et** le fichier `vercel.json` (tâche planifiée quotidienne des rappels de relance).
 5. Dans Supabase, ajoutez l'URL de production dans **Authentication > URL Configuration** (Site URL + Redirect URLs) afin que la confirmation d'email et les redirections fonctionnent correctement en production.
+
+## 7. Activer les rappels de relance par email (optionnel)
+
+1. Créez un compte sur [resend.com](https://resend.com) (offre gratuite disponible).
+2. Récupérez une clé API et renseignez `RESEND_API_KEY`.
+3. Renseignez `RESEND_FROM_EMAIL` avec une adresse d'envoi vérifiée dans Resend (ex : `rappels@votredomaine.fr`).
+4. Dans Supabase (**Project Settings > API**), copiez la clé **service_role** dans `SUPABASE_SERVICE_ROLE_KEY`.
+5. Générez une valeur aléatoire pour `CRON_SECRET` (ex : `openssl rand -hex 32`).
+6. Dans Vercel, sous **Settings > Cron Jobs**, vérifiez que la tâche `/api/cron/send-reminders` (définie dans `vercel.json`) est bien active, et renseignez l'en-tête d'autorisation si l'interface le demande.
+
+Sans ces variables, l'application fonctionne normalement : les relances restent visibles dans le tableau de bord, simplement aucun email n'est envoyé.
+
+## 8. Activer le paiement de l'offre Étudiant+ (optionnel)
+
+1. Créez un compte sur [stripe.com](https://stripe.com).
+2. Créez un produit "Étudiant+" avec un prix récurrent mensuel, et copiez son **Price ID** dans `STRIPE_PRICE_ID`.
+3. Copiez votre clé secrète (**Developers > API keys**) dans `STRIPE_SECRET_KEY`.
+4. Créez un endpoint de webhook pointant vers `https://votre-site.vercel.app/api/stripe/webhook`, écoutant les événements `checkout.session.completed`, `customer.subscription.updated` et `customer.subscription.deleted`, puis copiez le secret de signature dans `STRIPE_WEBHOOK_SECRET`.
+
+Sans ces variables, le bouton "Passer à Étudiant+" affiche un message indiquant que le paiement n'est pas encore disponible, sans bloquer le reste du site.
 
 ## Fonctionnalités principales
 
 - **Landing page** : promesse, problème/solution, bénéfices, fonctionnement, tarifs, FAQ.
 - **Authentification** : inscription, connexion, déconnexion via Supabase Auth ; routes `/dashboard/*` protégées par middleware.
 - **Dashboard** : statistiques (candidatures envoyées, en attente, entretiens, relances à faire), objectif hebdomadaire de candidatures paramétrable avec barre de progression, et accès rapides.
-- **CRM de candidatures** : ajout, modification, suppression, filtre par statut, tri par date, mise en évidence des relances dues ou en retard, recherche d'email de contact (schémas courants, ou vérifié via Hunter.io si configuré), récupération automatique du texte d'une offre depuis son lien (fonctionne sur la plupart des pages carrière d'entreprise, pas sur LinkedIn/Indeed/Welcome to the Jungle qui bloquent ce type de récupération).
-- **Générateur de messages IA** : mail de candidature, mail de relance, message LinkedIn, mail de remerciement — rédigés par Claude (si clé configurée) en tenant compte de l'annonce et du CV, avec choix du ton et historique des messages générés.
-- **Lecture de CV** : dépôt d'un CV au format PDF, extraction et résumé automatique du profil (formation, compétences, expériences), réutilisé pour personnaliser les messages générés.
+- **CRM de candidatures** : ajout, modification, suppression, filtre par statut, recherche par entreprise/poste, tri par date, mise en évidence des relances dues ou en retard, estimation d'email de contact (schémas courants, à utiliser avec parcimonie), récupération automatique du texte d'une offre depuis son lien.
+- **Score de correspondance CV ↔ offre** : compare le résumé de CV de l'étudiant à la description d'une offre pour estimer ses chances, avec points forts et axes à renforcer.
+- **Rappels de relance par email** : une tâche planifiée quotidienne envoie un récapitulatif des relances dues à chaque étudiant concerné (nécessite Resend, voir section dédiée).
+- **Générateur de messages IA** : mail de candidature, mail de relance, message LinkedIn, mail de remerciement — rédigés par Claude (si clé configurée) en tenant compte de l'annonce et du CV, avec choix du ton, régénération ("autre proposition") et historique.
+- **Lecture de CV** : dépôt d'un CV au format PDF, extraction et résumé automatique du profil.
 - **Ressources** : conseils CV, LinkedIn, entretien, méthode de relance, organisation, exemples de messages.
-- **Profil** : informations personnelles utilisées pour personnaliser les messages générés, avec indicateur de complétion.
+- **Profil** : informations personnelles, plan d'abonnement (gratuit / Étudiant+ via Stripe), avec indicateur de complétion.
+- **Offre gratuite / Étudiant+** : la version gratuite est limitée à 15 candidatures suivies et un quota IA quotidien restreint ; l'offre Étudiant+ (paiement Stripe) lève ces limites.
 
 ## Notes techniques
 

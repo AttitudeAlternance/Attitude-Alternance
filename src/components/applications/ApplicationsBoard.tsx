@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
-import { Select } from "@/components/ui/Form";
+import { Input, Select } from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ApplicationForm } from "@/components/applications/ApplicationForm";
@@ -19,25 +20,35 @@ import {
 interface ApplicationsBoardProps {
   initialApplications: Application[];
   userId: string;
+  plan: "free" | "premium";
+  freeLimit: number;
+  cvSummary: string | null;
 }
 
 type SortOrder = "recent" | "ancien" | "relance";
 
-export function ApplicationsBoard({ initialApplications, userId }: ApplicationsBoardProps) {
+export function ApplicationsBoard({ initialApplications, userId, plan, freeLimit, cvSummary }: ApplicationsBoardProps) {
   const [applications, setApplications] = useState<Application[]>(initialApplications);
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">("all");
   const [sortOrder, setSortOrder] = useState<SortOrder>("recent");
+  const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [limitModalOpen, setLimitModalOpen] = useState(false);
   const [editingApp, setEditingApp] = useState<Application | null>(null);
   const [deletingApp, setDeletingApp] = useState<Application | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const supabase = createClient();
+  const atLimit = plan === "free" && applications.length >= freeLimit;
 
   const filtered = useMemo(() => {
     let list = [...applications];
     if (statusFilter !== "all") {
       list = list.filter((a) => a.status === statusFilter);
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter((a) => a.company.toLowerCase().includes(q) || a.role.toLowerCase().includes(q));
     }
     list.sort((a, b) => {
       if (sortOrder === "relance") {
@@ -50,9 +61,13 @@ export function ApplicationsBoard({ initialApplications, userId }: ApplicationsB
       return sortOrder === "recent" ? dateB - dateA : dateA - dateB;
     });
     return list;
-  }, [applications, statusFilter, sortOrder]);
+  }, [applications, statusFilter, sortOrder, search]);
 
   function openCreateModal() {
+    if (atLimit) {
+      setLimitModalOpen(true);
+      return;
+    }
     setEditingApp(null);
     setError(null);
     setModalOpen(true);
@@ -106,6 +121,14 @@ export function ApplicationsBoard({ initialApplications, userId }: ApplicationsB
     <div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5">
+          <div className="w-56">
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher une entreprise, un poste..."
+            />
+          </div>
+
           <div className="w-48">
             <Select
               value={statusFilter}
@@ -132,6 +155,16 @@ export function ApplicationsBoard({ initialApplications, userId }: ApplicationsB
         <Button onClick={openCreateModal}>+ Ajouter une candidature</Button>
       </div>
 
+      {plan === "free" && applications.length >= Math.round(freeLimit * 0.8) && (
+        <p className="mb-4 rounded-lg bg-warn-50 px-3 py-2 text-xs font-medium text-warn">
+          {applications.length}/{freeLimit} candidatures utilisées sur l&apos;offre gratuite.{" "}
+          <Link href="/dashboard/profile" className="underline">
+            Passer à Étudiant+
+          </Link>{" "}
+          pour un suivi illimité.
+        </p>
+      )}
+
       {applications.length === 0 ? (
         <EmptyState
           title="Aucune candidature pour le moment"
@@ -140,11 +173,17 @@ export function ApplicationsBoard({ initialApplications, userId }: ApplicationsB
         />
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Aucun résultat pour ce filtre"
-          description="Essayez un autre statut ou réinitialisez le filtre."
+          title="Aucun résultat"
+          description="Essayez un autre mot-clé ou un autre statut, ou réinitialisez les filtres."
           action={
-            <Button variant="secondary" onClick={() => setStatusFilter("all")}>
-              Réinitialiser le filtre
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setStatusFilter("all");
+                setSearch("");
+              }}
+            >
+              Réinitialiser les filtres
             </Button>
           }
         />
@@ -160,7 +199,7 @@ export function ApplicationsBoard({ initialApplications, userId }: ApplicationsB
         widthClass="max-w-2xl"
       >
         {error && <p className="mb-3 rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger">{error}</p>}
-        <ApplicationForm initialValue={editingApp} onSubmit={handleSubmit} onCancel={() => setModalOpen(false)} />
+        <ApplicationForm initialValue={editingApp} onSubmit={handleSubmit} onCancel={() => setModalOpen(false)} cvSummary={cvSummary} />
       </Modal>
 
       <Modal
@@ -178,6 +217,26 @@ export function ApplicationsBoard({ initialApplications, userId }: ApplicationsB
           <Button variant="danger" onClick={handleDelete}>
             Supprimer
           </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={limitModalOpen}
+        onClose={() => setLimitModalOpen(false)}
+        title="Limite de l'offre gratuite atteinte"
+        description={`L'offre gratuite est limitée à ${freeLimit} candidatures suivies.`}
+        widthClass="max-w-md"
+      >
+        <p className="text-sm text-muted">
+          Passez à Étudiant+ pour suivre un nombre illimité de candidatures et débloquer un usage étendu du générateur IA.
+        </p>
+        <div className="mt-5 flex justify-end gap-2.5">
+          <Button variant="ghost" onClick={() => setLimitModalOpen(false)}>
+            Plus tard
+          </Button>
+          <Link href="/dashboard/profile">
+            <Button>Passer à Étudiant+</Button>
+          </Link>
         </div>
       </Modal>
     </div>

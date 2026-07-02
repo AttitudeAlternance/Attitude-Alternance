@@ -1,9 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { CvUpload } from "@/components/profile/CvUpload";
+import { PlanCard } from "@/components/profile/PlanCard";
 import type { Profile } from "@/lib/types";
 
-export default async function ProfilePage() {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: { upgraded?: string };
+}) {
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
 
@@ -12,6 +20,8 @@ export default async function ProfilePage() {
     .select("*")
     .eq("id", userData.user?.id)
     .maybeSingle();
+
+  const typedProfile = profile as Profile | null;
 
   return (
     <div>
@@ -23,15 +33,17 @@ export default async function ProfilePage() {
       </div>
 
       <div className="space-y-6">
+        <PlanCard plan={typedProfile?.plan ?? "free"} justUpgraded={searchParams.upgraded === "1"} />
+
         <CvUpload
-          initialSummary={(profile as Profile | null)?.cv_summary ?? null}
-          initialUploadedAt={(profile as Profile | null)?.cv_uploaded_at ?? null}
+          initialSummary={typedProfile?.cv_summary ?? null}
+          initialUploadedAt={typedProfile?.cv_uploaded_at ?? null}
         />
 
         <ProfileForm
           userId={userData.user?.id ?? ""}
           email={userData.user?.email ?? ""}
-          initialProfile={profile as Profile | null}
+          initialProfile={typedProfile}
         />
       </div>
     </div>

@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea, Select, FieldHint } from "@/components/ui/Form";
+import { cn } from "@/lib/utils";
 import { APPLICATION_STATUSES, STATUS_LABELS, type Application, type ApplicationInput } from "@/lib/types";
 
 interface ApplicationFormProps {
   initialValue?: Application | null;
   onSubmit: (values: ApplicationInput) => Promise<void>;
   onCancel: () => void;
+  cvSummary?: string | null;
 }
 
 const emptyValue: ApplicationInput = {
@@ -24,7 +26,7 @@ const emptyValue: ApplicationInput = {
   job_description: "",
 };
 
-export function ApplicationForm({ initialValue, onSubmit, onCancel }: ApplicationFormProps) {
+export function ApplicationForm({ initialValue, onSubmit, onCancel, cvSummary }: ApplicationFormProps) {
   const [values, setValues] = useState<ApplicationInput>(
     initialValue
       ? {
@@ -50,12 +52,15 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
   const [findingEmail, setFindingEmail] = useState(false);
   const [emailBest, setEmailBest] = useState<string | null>(null);
   const [emailAlternatives, setEmailAlternatives] = useState<string[]>([]);
-  const [emailConfidence, setEmailConfidence] = useState<"verifiee" | "estimee" | null>(null);
+  const [emailConfidence, setEmailConfidence] = useState<"estimee" | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
   const [fetchingOffer, setFetchingOffer] = useState(false);
   const [fetchOfferError, setFetchOfferError] = useState<string | null>(null);
   const [fetchOfferSuccess, setFetchOfferSuccess] = useState(false);
+  const [matching, setMatching] = useState(false);
+  const [matchResult, setMatchResult] = useState<{ score: number; strengths: string[]; gaps: string[]; usedRealAi: boolean } | null>(null);
+  const [matchError, setMatchError] = useState<string | null>(null);
 
   function update<K extends keyof ApplicationInput>(key: K, value: ApplicationInput[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -144,6 +149,40 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
       setFetchOfferError("Une erreur est survenue. Copiez-collez le texte de l'offre manuellement.");
     } finally {
       setFetchingOffer(false);
+    }
+  }
+
+  async function handleMatchScore() {
+    setMatchError(null);
+    setMatchResult(null);
+
+    if (!cvSummary) {
+      setMatchError("Déposez d'abord votre CV dans votre profil pour utiliser cette analyse.");
+      return;
+    }
+    if (!values.job_description) {
+      setMatchError("Renseignez d'abord la description de l'offre ci-dessus.");
+      return;
+    }
+
+    setMatching(true);
+    try {
+      const res = await fetch("/api/match-score", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ cvSummary, jobDescription: values.job_description }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMatchError(data.error || "Analyse impossible.");
+        return;
+      }
+      setMatchResult(data);
+    } catch {
+      setMatchError("Une erreur est survenue lors de l'analyse.");
+    } finally {
+      setMatching(false);
     }
   }
 
@@ -327,21 +366,16 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
 
             {emailConfidence && (
               <div className="mt-3 rounded-lg bg-paper/60 p-3">
-                <p className="text-xs font-medium text-ink">
-                  {emailConfidence === "verifiee" ? (
-                    <span className="text-success">✓ Adresse trouvée et vérifiée — insérée dans le champ ci-dessus.</span>
-                  ) : (
-                    <span className="text-warn">
-                      ⚠ Adresse estimée à partir des schémas les plus courants (non vérifiée), insérée dans le champ ci-dessus.
-                    </span>
-                  )}
+                <p className="text-xs font-medium text-warn">
+                  ⚠ Adresse estimée à partir des schémas les plus courants (non vérifiée), insérée dans le champ ci-dessus. Vérifiez-la avant tout envoi important.
                 </p>
 
-                {emailConfidence === "estimee" && allFoundEmails.length > 1 && (
+                {allFoundEmails.length > 1 && (
                   <div className="mt-2 rounded-lg bg-primary-50 p-3">
                     <p className="text-xs text-primary-600">
-                      Vous n&apos;êtes pas sûr du bon format ? Copiez toutes les adresses possibles et mettez-les en
-                      copie cachée (Cci) de votre mail de candidature pour maximiser les chances qu&apos;il arrive à bon port.
+                      Vous n&apos;êtes pas sûr du bon format ? Vous pouvez copier ces {allFoundEmails.length} adresses et les
+                      mettre en copie cachée (Cci) de votre mail. À utiliser avec parcimonie : évitez d&apos;en abuser sur une
+                      même entreprise, au risque de ressembler à du spam.
                     </p>
                     <Button type="button" size="sm" variant="secondary" className="mt-2" onClick={handleCopyAllEmails}>
                       {copiedAll ? "Copié ✓" : `Copier les ${allFoundEmails.length} adresses (pour le Cci)`}
@@ -380,6 +414,69 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
               className="min-h-[120px]"
             />
             <FieldHint>Utilisée automatiquement par le générateur de messages IA si vous liez cette candidature.</FieldHint>
+          </div>
+
+          <div className="rounded-xl border border-dashed border-line bg-white p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-medium text-ink">🎯 Score de correspondance avec mon CV</p>
+                <p className="mt-1 text-xs text-muted">
+                  {cvSummary
+                    ? "Compare votre profil à cette offre pour évaluer vos chances et repérer ce qui manque."
+                    : "Déposez votre CV dans votre profil pour activer cette analyse."}
+                </p>
+              </div>
+              <Button type="button" variant="secondary" size="sm" onClick={handleMatchScore} disabled={matching || !cvSummary}>
+                {matching ? "Analyse..." : "Analyser"}
+              </Button>
+            </div>
+
+            {matchError && <p className="mt-2 text-xs text-danger">{matchError}</p>}
+
+            {matchResult && (
+              <div className="mt-3 rounded-lg bg-paper/60 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-line">
+                    <div
+                      className={cn(
+                        "h-full rounded-full",
+                        matchResult.score >= 70 ? "bg-success" : matchResult.score >= 40 ? "bg-warn" : "bg-danger"
+                      )}
+                      style={{ width: `${matchResult.score}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-semibold text-ink">{matchResult.score}%</span>
+                </div>
+
+                {matchResult.strengths.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-success">Points forts</p>
+                    <ul className="mt-1 space-y-1">
+                      {matchResult.strengths.map((s, i) => (
+                        <li key={i} className="text-xs text-ink/80">• {s}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {matchResult.gaps.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-warn">À renforcer ou mentionner</p>
+                    <ul className="mt-1 space-y-1">
+                      {matchResult.gaps.map((g, i) => (
+                        <li key={i} className="text-xs text-ink/80">• {g}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {!matchResult.usedRealAi && (
+                  <p className="mt-3 text-xs text-muted">
+                    Estimation simplifiée basée sur des mots-clés (aucune clé IA configurée) — le résultat avec Claude actif est plus fiable.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div>

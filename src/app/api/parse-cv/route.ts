@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkAndConsumeAiQuota } from "@/lib/aiUsage";
 
 // Next.js doit exécuter cette route en environnement Node.js (pas Edge)
 // car pdf-parse a besoin de l'API Buffer de Node.
@@ -14,6 +15,14 @@ export async function POST(request: Request) {
 
     if (authError || !userData.user) {
       return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+    }
+
+    const quota = await checkAndConsumeAiQuota(supabase, userData.user.id);
+    if (!quota.allowed) {
+      return NextResponse.json(
+        { error: `Limite de ${quota.limit} analyses IA atteinte pour aujourd'hui. Réessayez demain, ou passez à Étudiant+ pour un quota plus élevé.` },
+        { status: 429 }
+      );
     }
 
     const body = await request.json();
