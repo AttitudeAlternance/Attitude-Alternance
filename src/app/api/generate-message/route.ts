@@ -19,6 +19,7 @@ export async function POST(request: Request) {
       lastName,
       formation,
       jobDescription,
+      cvSummary,
     } = body as {
       type: MessageType;
       company: string;
@@ -30,13 +31,14 @@ export async function POST(request: Request) {
       lastName?: string;
       formation?: string;
       jobDescription?: string;
+      cvSummary?: string;
     };
 
     if (!type || !company || !role || !tone) {
       return NextResponse.json({ error: "Champs manquants." }, { status: 400 });
     }
 
-    const content = await generateMessage({
+    const result = await generateMessage({
       type,
       company,
       role,
@@ -47,9 +49,10 @@ export async function POST(request: Request) {
       lastName,
       formation,
       jobDescription,
+      cvSummary,
     });
 
-    return NextResponse.json({ content });
+    return NextResponse.json({ content: result.content, usedRealAi: result.usedRealAi });
   } catch (err) {
     return NextResponse.json({ error: "Erreur lors de la génération du message." }, { status: 500 });
   }

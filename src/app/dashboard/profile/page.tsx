@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/components/profile/ProfileForm";
+import { CvUpload } from "@/components/profile/CvUpload";
 import type { Profile } from "@/lib/types";
 
 export default async function ProfilePage() {
@@ -21,11 +22,18 @@ export default async function ProfilePage() {
         </p>
       </div>
 
-      <ProfileForm
-        userId={userData.user?.id ?? ""}
-        email={userData.user?.email ?? ""}
-        initialProfile={profile as Profile | null}
-      />
+      <div className="space-y-6">
+        <CvUpload
+          initialSummary={(profile as Profile | null)?.cv_summary ?? null}
+          initialUploadedAt={(profile as Profile | null)?.cv_uploaded_at ?? null}
+        />
+
+        <ProfileForm
+          userId={userData.user?.id ?? ""}
+          email={userData.user?.email ?? ""}
+          initialProfile={profile as Profile | null}
+        />
+      </div>
     </div>
   );
 }

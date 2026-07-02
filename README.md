@@ -59,9 +59,12 @@ npm install
    - la table `generated_messages` (historique des messages générés) ;
    - les triggers (mise à jour de `updated_at`, création automatique d'un profil à l'inscription) ;
    - les policies **Row Level Security** : chaque utilisateur ne voit et ne modifie que ses propres données.
-3. Dans **Authentication > Providers**, l'authentification par email/mot de passe est active par défaut.
+3. Exécutez ensuite [`supabase/migration_cv.sql`](./supabase/migration_cv.sql) (dans une nouvelle requête SQL) pour activer la lecture de CV :
+   - ajoute les colonnes `cv_file_path`, `cv_text`, `cv_summary`, `cv_uploaded_at` à `profiles` ;
+   - crée un bucket de stockage privé `cvs` avec des policies garantissant que chaque étudiant n'accède qu'à son propre CV.
+4. Dans **Authentication > Providers**, l'authentification par email/mot de passe est active par défaut.
    - Pour du développement rapide, vous pouvez désactiver « Confirm email » dans **Authentication > Settings** afin de tester sans avoir à confirmer chaque compte.
-4. Récupérez vos clés dans **Project Settings > API** :
+5. Récupérez vos clés dans **Project Settings > API** :
    - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
    - `anon public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
@@ -79,12 +82,11 @@ Renseignez :
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-# Optionnel : active la génération IA réelle si renseignée
-OPENAI_API_KEY=
+# Fortement recommandé : active la vraie génération IA (Claude) et l'analyse de CV
 ANTHROPIC_API_KEY=
 ```
 
-> Sans clé `OPENAI_API_KEY` ni `ANTHROPIC_API_KEY`, le générateur de messages utilise automatiquement une génération locale (placeholder), fonctionnelle et personnalisée, sans dépendance externe.
+> **Sans `ANTHROPIC_API_KEY`**, l'application reste fonctionnelle mais en mode dégradé : le générateur de messages utilise des modèles de phrases pré-écrits (plus mécanique), et le résumé de CV se limite à un extrait brut du texte, sans réelle compréhension. **Avec une clé configurée**, Claude lit réellement l'annonce et le CV pour rédiger des messages naturels et pertinents. Vous pouvez créer une clé sur [console.anthropic.com](https://console.anthropic.com).
 
 ## 4. Lancement en local
 
@@ -94,17 +96,11 @@ npm run dev
 
 L'application est disponible sur [http://localhost:3000](http://localhost:3000).
 
-## 5. Brancher une vraie API IA (OpenAI / Claude)
+## 5. Fonctionnement de la génération IA et de la lecture de CV
 
-Toute la logique de génération est centralisée dans **`src/lib/ai/generateMessage.ts`** et appelée uniquement depuis la route serveur **`src/app/api/generate-message/route.ts`** (la clé API n'est donc jamais exposée au navigateur).
-
-Pour activer une vraie génération IA :
-
-1. Ajoutez votre clé dans `.env.local` (`OPENAI_API_KEY` ou `ANTHROPIC_API_KEY`).
-2. Dans `generateMessage.ts`, remplacez le contenu de la fonction `generateMessage()` par un appel à l'API souhaitée (un exemple d'appel à l'API Anthropic est déjà présent en commentaire dans le fichier).
-3. La fonction `buildPrompt()` est prête à l'emploi pour construire le prompt à partir des informations saisies par l'étudiant.
-
-Aucune autre modification n'est nécessaire : l'interface, la sauvegarde en base et l'historique fonctionnent à l'identique.
+- **Génération de messages** (`src/lib/ai/generateMessage.ts`) : si `ANTHROPIC_API_KEY` est configurée, chaque message est rédigé par Claude en tenant compte de l'annonce collée et du résumé de CV, avec des consignes de style (naturel, clair, impactant, sans jargon robotique). Sans clé, un générateur local prend le relais.
+- **Lecture de CV** (`src/app/api/parse-cv/route.ts`) : le PDF déposé est stocké dans Supabase Storage (bucket privé `cvs`), son texte est extrait avec `pdf-parse`, puis résumé par Claude (formation, compétences, expériences, points forts) si une clé est configurée. Ce résumé est réutilisé automatiquement par le générateur de messages, sans que l'étudiant ait à ressaisir ses informations.
+- Ces deux routes s'exécutent côté serveur : la clé API n'est jamais exposée au navigateur.
 
 ## 6. Déploiement sur Vercel
 
@@ -113,7 +109,7 @@ Aucune autre modification n'est nécessaire : l'interface, la sauvegarde en base
 3. Renseignez les variables d'environnement (les mêmes que dans `.env.local`) dans **Settings > Environment Variables** :
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` (optionnel)
+   - `ANTHROPIC_API_KEY` (fortement recommandé pour une génération IA et une lecture de CV de qualité)
 4. Déployez. Vercel détecte automatiquement Next.js, aucune configuration supplémentaire n'est nécessaire.
 5. Dans Supabase, ajoutez l'URL de production dans **Authentication > URL Configuration** (Site URL + Redirect URLs) afin que la confirmation d'email et les redirections fonctionnent correctement en production.
 
@@ -123,7 +119,8 @@ Aucune autre modification n'est nécessaire : l'interface, la sauvegarde en base
 - **Authentification** : inscription, connexion, déconnexion via Supabase Auth ; routes `/dashboard/*` protégées par middleware.
 - **Dashboard** : statistiques (candidatures envoyées, en attente, entretiens, relances à faire) et accès rapides.
 - **CRM de candidatures** : ajout, modification, suppression, filtre par statut, tri par date, mise en évidence des relances dues ou en retard.
-- **Générateur de messages IA** : mail de candidature, mail de relance, message LinkedIn, mail de remerciement — avec choix du ton et historique des messages générés.
+- **Générateur de messages IA** : mail de candidature, mail de relance, message LinkedIn, mail de remerciement — rédigés par Claude (si clé configurée) en tenant compte de l'annonce et du CV, avec choix du ton et historique des messages générés.
+- **Lecture de CV** : dépôt d'un CV au format PDF, extraction et résumé automatique du profil (formation, compétences, expériences), réutilisé pour personnaliser les messages générés.
 - **Ressources** : conseils CV, LinkedIn, entretien, méthode de relance, organisation, exemples de messages.
 - **Profil** : informations personnelles utilisées pour personnaliser les messages générés, avec indicateur de complétion.
 

@@ -11,72 +11,111 @@ export interface GenerateMessageParams {
   lastName?: string;
   formation?: string;
   jobDescription?: string;
+  cvSummary?: string;
 }
 
-// Extrait une phrase représentative de l'annonce collée par l'étudiant,
-// pour l'utiliser comme point d'accroche dans le message (sans dépendance IA).
-function extractJobHighlight(jobDescription?: string): string | null {
-  if (!jobDescription) return null;
-  const cleaned = jobDescription.replace(/\s+/g, " ").trim();
-  if (!cleaned) return null;
-  const sentenceMatch = cleaned.match(/^.{20,180}?[\.!?]/);
-  const snippet = sentenceMatch ? sentenceMatch[0].trim() : cleaned.slice(0, 160).trim();
-  return snippet;
+export interface GenerateMessageResult {
+  content: string;
+  usedRealAi: boolean;
 }
 
 /**
  * Point d'entrée unique pour la génération de messages.
  *
- * Pour connecter une vraie API (OpenAI, Anthropic...) :
- * 1. Ajoutez votre clé dans .env.local (OPENAI_API_KEY ou ANTHROPIC_API_KEY)
- * 2. Remplacez le contenu de cette fonction par un appel à l'API souhaitée
- *    (voir les exemples commentés en bas de fichier)
- * 3. Gardez la même signature (GenerateMessageParams -> Promise<string>)
- *    pour ne rien changer côté interface.
+ * Si ANTHROPIC_API_KEY est configurée (dans .env.local ou dans les variables
+ * d'environnement Vercel), le message est rédigé par une vraie IA (Claude),
+ * qui comprend réellement l'annonce et le CV pour un résultat naturel.
+ *
+ * Sans clé configurée, un générateur local (basé sur des modèles de phrases)
+ * prend le relais : il fonctionne, mais reste plus mécanique.
  */
-export async function generateMessage(params: GenerateMessageParams): Promise<string> {
-  const hasRealApiKey = Boolean(process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY);
+export async function generateMessage(params: GenerateMessageParams): Promise<GenerateMessageResult> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
 
-  if (!hasRealApiKey) {
-    return generatePlaceholderMessage(params);
+  if (apiKey) {
+    try {
+      const content = await generateWithClaude(params, apiKey);
+      return { content, usedRealAi: true };
+    } catch (err) {
+      console.error("Erreur lors de l'appel à l'API Anthropic, repli sur le générateur local :", err);
+      return { content: generatePlaceholderMessage(params), usedRealAi: false };
+    }
   }
 
-  // --- Zone à activer quand une clé API est configurée ---
-  // Exemple avec l'API Anthropic (à décommenter et adapter) :
-  //
-  // const response = await fetch("https://api.anthropic.com/v1/messages", {
-  //   method: "POST",
-  //   headers: {
-  //     "content-type": "application/json",
-  //     "x-api-key": process.env.ANTHROPIC_API_KEY!,
-  //     "anthropic-version": "2023-06-01",
-  //   },
-  //   body: JSON.stringify({
-  //     model: "claude-sonnet-4-6",
-  //     max_tokens: 600,
-  //     messages: [{ role: "user", content: buildPrompt(params) }],
-  //   }),
-  // });
-  // const data = await response.json();
-  // return data.content[0].text;
-
-  // Repli de sécurité si l'appel réel n'est pas encore branché :
-  return generatePlaceholderMessage(params);
+  return { content: generatePlaceholderMessage(params), usedRealAi: false };
 }
 
-// Construit le prompt qui sera envoyé à une vraie API IA (utile une fois branché)
+// ----------------------------------------------------------------------------
+// Génération réelle via l'API Anthropic (Claude)
+// ----------------------------------------------------------------------------
+async function generateWithClaude(params: GenerateMessageParams, apiKey: string): Promise<string> {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 700,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: buildPrompt(params) }],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Anthropic API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const text = data?.content?.find((block: { type: string }) => block.type === "text")?.text;
+  if (!text) throw new Error("Réponse Anthropic vide ou inattendue");
+  return text.trim();
+}
+
+const SYSTEM_PROMPT = `Tu es un assistant qui aide des étudiants à rédiger des messages pour leur recherche d'alternance (mails de candidature, relances, messages LinkedIn, remerciements post-entretien).
+
+Règles impératives :
+- Écris en français, dans un style humain, naturel et fluide — jamais robotique, jamais de formules toutes faites répétées mécaniquement.
+- Reste clair, simple et direct : des phrases courtes, un message qui va à l'essentiel plutôt qu'un texte qui tourne autour du pot.
+- Base-toi réellement sur le contenu de l'annonce et du CV fournis (s'ils sont donnés) pour montrer une vraie compréhension des missions du poste et du profil du candidat — ne te contente pas de recopier des mots-clés, reformule et fais des liens pertinents.
+- Ne mets aucun placeholder du type [xxx] : le texte doit être prêt à copier-coller tel quel.
+- Ne mets pas de titre ni d'objet, uniquement le corps du message.
+- Respecte le ton demandé (professionnel, direct, ou chaleureux) sans devenir excessif dans un sens ou dans l'autre.
+- Le message doit rester impactant : privilégie 2 à 4 paragraphes courts plutôt qu'un long pavé.`;
+
+// Construit le prompt envoyé à l'IA, avec tout le contexte disponible.
 export function buildPrompt(params: GenerateMessageParams): string {
-  const { type, company, role, recruiterName, tone, personalInfo, firstName, lastName, jobDescription } = params;
+  const {
+    type,
+    company,
+    role,
+    recruiterName,
+    tone,
+    personalInfo,
+    firstName,
+    lastName,
+    formation,
+    jobDescription,
+    cvSummary,
+  } = params;
+
   return [
     `Rédige un ${labelForType(type)} pour un étudiant qui recherche une alternance.`,
     `Entreprise ciblée : ${company}`,
     `Poste visé : ${role}`,
-    recruiterName ? `Recruteur : ${recruiterName}` : "",
+    recruiterName ? `Recruteur destinataire : ${recruiterName}` : "Pas de nom de recruteur connu — utilise une formule de politesse neutre.",
     `Ton souhaité : ${tone}`,
     `Signataire : ${[firstName, lastName].filter(Boolean).join(" ") || "L'étudiant"}`,
-    personalInfo ? `Informations personnelles à intégrer : ${personalInfo}` : "",
-    jobDescription ? `Texte de l'annonce à utiliser pour personnaliser le message : ${jobDescription}` : "",
-    "Le texte doit être prêt à copier-coller, sans placeholder du type [xxx].",
+    formation ? `Formation actuelle du candidat : ${formation}` : "",
+    personalInfo ? `Informations personnelles supplémentaires à intégrer si pertinent : ${personalInfo}` : "",
+    jobDescription
+      ? `Texte de l'annonce (utilise-le pour comprendre les vraies missions et montrer une correspondance sincère, sans le citer mot pour mot) :\n"""\n${jobDescription}\n"""`
+      : "",
+    cvSummary
+      ? `Résumé du profil du candidat extrait de son CV (utilise-le pour choisir les compétences/expériences les plus pertinentes par rapport au poste) :\n"""\n${cvSummary}\n"""`
+      : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -96,10 +135,36 @@ function labelForType(type: MessageType) {
 }
 
 // ----------------------------------------------------------------------------
-// Générateur local (placeholder). Produit un texte cohérent et personnalisé
-// sans dépendance externe, pour que la fonctionnalité soit utilisable
-// immédiatement, même sans clé API configurée.
+// Générateur local (repli). Utilisé uniquement si aucune clé ANTHROPIC_API_KEY
+// n'est configurée, pour que la fonctionnalité reste utilisable dans tous les cas.
 // ----------------------------------------------------------------------------
+
+// Extrait une phrase représentative de l'annonce, en priorisant les phrases
+// qui parlent de la mission / du profil recherché plutôt que la présentation
+// générale de l'entreprise (souvent en tête d'annonce).
+function extractJobHighlight(jobDescription?: string): string | null {
+  if (!jobDescription) return null;
+  const cleaned = jobDescription.replace(/\s+/g, " ").trim();
+  if (!cleaned) return null;
+
+  const sentences = cleaned
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 25);
+
+  if (sentences.length === 0) return null;
+
+  const missionKeywords = /(mission|recherch|profil|vous serez|vous aurez|en charge|responsab|tâche|compétence|vos activit|vos princip)/i;
+  const candidate = sentences.find((s) => missionKeywords.test(s)) ?? sentences[0];
+
+  const maxLength = 170;
+  if (candidate.length <= maxLength) return candidate;
+
+  const truncated = candidate.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return `${truncated.slice(0, lastSpace > 40 ? lastSpace : maxLength)}…`;
+}
+
 function generatePlaceholderMessage(params: GenerateMessageParams): string {
   const {
     type,
@@ -112,6 +177,7 @@ function generatePlaceholderMessage(params: GenerateMessageParams): string {
     lastName,
     formation,
     jobDescription,
+    cvSummary,
   } = params;
 
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Prénom Nom";
@@ -119,6 +185,7 @@ function generatePlaceholderMessage(params: GenerateMessageParams): string {
   const politeOpen = tone === "chaleureux" ? `Bonjour ${greetingName},` : `Bonjour${recruiterName ? ` ${recruiterName}` : ""},`;
   const signatureBlock = [fullName, formation ? formation : ""].filter(Boolean).join("\n");
   const jobHighlight = extractJobHighlight(jobDescription);
+  const cvLine = cvSummary ? cvSummary.split(/\n|\.\s/)[0]?.trim() : null;
 
   switch (type) {
     case "candidature": {
@@ -130,16 +197,18 @@ function generatePlaceholderMessage(params: GenerateMessageParams): string {
       );
 
       const jobLink = jobHighlight
-        ? `Votre annonce précise notamment : « ${jobHighlight} » — un point qui correspond directement à mon profil et à ce que je souhaite développer en alternance.`
+        ? `Votre annonce précise notamment que ${jobHighlight.charAt(0).toLowerCase()}${jobHighlight.slice(1).replace(/[.!?]+$/, "")} — un aspect qui correspond directement à mon profil et à ce que je souhaite développer en alternance.`
         : null;
 
       const formationLine = formation
         ? `Actuellement en ${formation}, je recherche une alternance me permettant de mettre en pratique mes compétences tout en continuant à me former sur le terrain.`
         : `Je recherche actuellement une alternance me permettant de mettre en pratique mes compétences tout en continuant à me former sur le terrain.`;
 
-      const skillsLine = personalInfo
-        ? `Concrètement, ${personalInfo.charAt(0).toLowerCase()}${personalInfo.slice(1)}`
-        : null;
+      const skillsLine = cvLine
+        ? `Mon parcours m'a notamment permis de développer : ${cvLine.toLowerCase()}.`
+        : personalInfo
+          ? `Concrètement, ${personalInfo.charAt(0).toLowerCase()}${personalInfo.slice(1)}`
+          : null;
 
       const motivationLine = `Rejoindre ${company} représente pour moi une réelle opportunité de contribuer à vos projets tout en progressant au contact d'une équipe expérimentée.`;
 

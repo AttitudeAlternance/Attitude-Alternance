@@ -69,6 +69,10 @@ export interface Profile {
   linkedin_url: string | null;
   cv_url: string | null;
   goal: string | null;
+  cv_file_path: string | null;
+  cv_text: string | null;
+  cv_summary: string | null;
+  cv_uploaded_at: string | null;
   created_at: string;
   updated_at: string;
 }

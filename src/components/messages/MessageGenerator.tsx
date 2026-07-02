@@ -40,6 +40,7 @@ export function MessageGenerator({ profile, userId, history: initialHistory }: M
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usedRealAi, setUsedRealAi] = useState(true);
   const [history, setHistory] = useState<GeneratedMessage[]>(initialHistory);
 
   const supabase = createClient();
@@ -62,6 +63,7 @@ export function MessageGenerator({ profile, userId, history: initialHistory }: M
           tone,
           personalInfo,
           jobDescription,
+          cvSummary: profile?.cv_summary,
           firstName: profile?.first_name,
           lastName: profile?.last_name,
           formation: profile?.formation,
@@ -71,6 +73,7 @@ export function MessageGenerator({ profile, userId, history: initialHistory }: M
       if (!res.ok) throw new Error("generation_failed");
       const data = await res.json();
       setResult(data.content);
+      setUsedRealAi(data.usedRealAi);
 
       const { data: saved } = await supabase
         .from("generated_messages")
@@ -123,6 +126,12 @@ export function MessageGenerator({ profile, userId, history: initialHistory }: M
         </div>
 
         <form onSubmit={handleGenerate} className="space-y-4">
+          {profile?.cv_summary && (
+            <p className="rounded-lg bg-success-50 px-3 py-2 text-xs font-medium text-success">
+              ✓ Votre CV est pris en compte automatiquement pour personnaliser ce message.
+            </p>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="company">Entreprise *</Label>
@@ -187,6 +196,11 @@ export function MessageGenerator({ profile, userId, history: initialHistory }: M
               </Button>
             </div>
             <pre className="whitespace-pre-wrap font-body text-sm text-ink/90">{result}</pre>
+            {!usedRealAi && (
+              <p className="mt-3 text-xs text-warn">
+                Message généré en mode simplifié (aucune clé IA configurée) — connectez ANTHROPIC_API_KEY pour une rédaction plus naturelle.
+              </p>
+            )}
           </div>
         )}
       </Card>
