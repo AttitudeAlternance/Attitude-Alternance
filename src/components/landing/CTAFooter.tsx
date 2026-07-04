@@ -30,6 +30,17 @@ export function Footer() {
           <Logo />
           <span className="font-display text-sm font-semibold text-ink">Attitude Alternance</span>
         </div>
+        <nav className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted">
+          <Link href="/mentions-legales" className="hover:text-ink hover:underline">
+            Mentions légales
+          </Link>
+          <Link href="/cgu" className="hover:text-ink hover:underline">
+            CGU
+          </Link>
+          <Link href="/confidentialite" className="hover:text-ink hover:underline">
+            Confidentialité
+          </Link>
+        </nav>
         <p className="text-xs text-muted">
           © {new Date().getFullYear()} Attitude Alternance. Fait pour les étudiants en alternance.
         </p>

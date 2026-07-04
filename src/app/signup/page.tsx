@@ -12,6 +12,7 @@ export default function SignupPage() {
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -21,6 +22,12 @@ export default function SignupPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!acceptedTerms) {
+      setError("Vous devez accepter les CGU et la politique de confidentialité pour créer un compte.");
+      return;
+    }
+
     setLoading(true);
 
     const { data, error } = await supabase.auth.signUp({
@@ -31,12 +38,18 @@ export default function SignupPage() {
       },
     });
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       setError(error.message === "User already registered" ? "Un compte existe déjà avec cet email." : "Une erreur est survenue. Réessayez.");
       return;
     }
+
+    // Enregistre la date d'acceptation des CGU sur le profil (preuve de consentement)
+    if (data.user) {
+      await supabase.from("profiles").upsert({ id: data.user.id, terms_accepted_at: new Date().toISOString() });
+    }
+
+    setLoading(false);
 
     // Si la confirmation par email est désactivée dans Supabase, une session existe déjà
     if (data.session) {
@@ -115,19 +128,35 @@ export default function SignupPage() {
           />
         </div>
 
+        <label className="flex items-start gap-2.5 text-xs text-muted">
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            onChange={(e) => setAcceptedTerms(e.target.checked)}
+            className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-line text-primary focus:ring-primary-200"
+          />
+          <span>
+            J&apos;accepte les{" "}
+            <Link href="/cgu" target="_blank" className="font-medium text-primary hover:underline">
+              Conditions Générales d&apos;Utilisation
+            </Link>{" "}
+            et la{" "}
+            <Link href="/confidentialite" target="_blank" className="font-medium text-primary hover:underline">
+              politique de confidentialité
+            </Link>
+            .
+          </span>
+        </label>
+
         {error && (
           <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger" role="alert">
             {error}
           </p>
         )}
 
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" className="w-full" disabled={loading || !acceptedTerms}>
           {loading ? "Création..." : "Créer mon compte"}
         </Button>
-
-        <p className="text-center text-xs text-muted">
-          En créant un compte, vous acceptez nos conditions d&apos;utilisation.
-        </p>
       </form>
     </AuthLayout>
   );

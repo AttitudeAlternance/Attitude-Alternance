@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { CvUpload } from "@/components/profile/CvUpload";
 import { PlanCard } from "@/components/profile/PlanCard";
+import { DeleteAccountCard } from "@/components/profile/DeleteAccountCard";
 import type { Profile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +46,8 @@ export default async function ProfilePage({
           email={userData.user?.email ?? ""}
           initialProfile={typedProfile}
         />
+
+        <DeleteAccountCard />
       </div>
     </div>
   );

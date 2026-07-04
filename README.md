@@ -139,6 +139,23 @@ Sans ces variables, l'application fonctionne normalement : les relances restent 
 
 Sans ces variables, le bouton "Passer à Étudiant+" affiche un message indiquant que le paiement n'est pas encore disponible, sans bloquer le reste du site.
 
+## 9. Pages légales — à compléter avant un lancement public
+
+Le site inclut désormais trois pages légales, accessibles depuis le pied de page : **Mentions légales**
+(`/mentions-legales`), **CGU** (`/cgu`) et **Politique de confidentialité** (`/confidentialite`).
+
+⚠️ **Avant tout lancement public**, ouvrez `src/app/mentions-legales/page.tsx` et remplacez les deux blocs
+signalés `[À COMPLÉTER]` par votre identité réelle (nom, statut, adresse, email de contact) : ce sont des
+informations obligatoires que seul l'éditeur du site peut renseigner.
+
+Ces documents couvrent les points essentiels (identité de l'éditeur, RGPD, droit de rétractation, droit à
+l'effacement) mais ne remplacent pas une relecture par un professionnel du droit, en particulier si le site
+est commercialisé à grande échelle ou s'adresse à un public mineur de manière significative.
+
+L'inscription impose désormais l'acceptation explicite des CGU et de la politique de confidentialité (case à
+cocher obligatoire), et chaque utilisateur peut supprimer définitivement son compte et l'ensemble de ses
+données depuis la page "Mon profil" (droit à l'effacement RGPD).
+
 ## Fonctionnalités principales
 
 - **Landing page** : promesse, problème/solution, bénéfices, fonctionnement, tarifs, FAQ.
