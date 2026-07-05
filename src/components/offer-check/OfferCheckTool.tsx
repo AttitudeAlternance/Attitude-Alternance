@@ -5,12 +5,17 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea, Select } from "@/components/ui/Form";
 import { cn } from "@/lib/utils";
-import { detectSchoolOffer, type SchoolOfferDetectionResult } from "@/lib/detectSchoolOffer";
 import type { Application } from "@/lib/types";
 
 interface OfferCheckToolProps {
   applications: Application[];
   initialApplicationId?: string;
+}
+
+interface OfferCheckResult {
+  percentage: number;
+  reasons: string[];
+  usedRealAi: boolean;
 }
 
 export function OfferCheckTool({ applications, initialApplicationId }: OfferCheckToolProps) {
@@ -19,7 +24,9 @@ export function OfferCheckTool({ applications, initialApplicationId }: OfferChec
   const [jobDescription, setJobDescription] = useState("");
   const [fetchingOffer, setFetchingOffer] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [result, setResult] = useState<SchoolOfferDetectionResult | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const [result, setResult] = useState<OfferCheckResult | null>(null);
 
   function handleSelectApplication(id: string) {
     setSelectedApplicationId(id);
@@ -64,8 +71,34 @@ export function OfferCheckTool({ applications, initialApplicationId }: OfferChec
     }
   }
 
-  function handleAnalyze() {
-    setResult(detectSchoolOffer(jobDescription, offerUrl));
+  async function handleAnalyze() {
+    setAnalyzeError(null);
+    setResult(null);
+
+    if (!jobDescription.trim()) {
+      setAnalyzeError("Collez ou récupérez d'abord le texte de l'offre.");
+      return;
+    }
+
+    setAnalyzing(true);
+    try {
+      const res = await fetch("/api/detect-school-offer", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: jobDescription, offerUrl }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setAnalyzeError(data.error || "Analyse impossible.");
+        return;
+      }
+      setResult(data);
+    } catch {
+      setAnalyzeError("Une erreur est survenue lors de l'analyse.");
+    } finally {
+      setAnalyzing(false);
+    }
   }
 
   const barColor = !result
@@ -122,9 +155,11 @@ export function OfferCheckTool({ applications, initialApplicationId }: OfferChec
           />
         </div>
 
-        <Button className="mt-4" onClick={handleAnalyze} disabled={!jobDescription.trim() && !offerUrl.trim()}>
-          🔍 Analyser cette offre
+        <Button className="mt-4" onClick={handleAnalyze} disabled={analyzing || !jobDescription.trim()}>
+          {analyzing ? "Analyse en cours..." : "🔍 Analyser cette offre"}
         </Button>
+
+        {analyzeError && <p className="mt-3 rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger">{analyzeError}</p>}
 
         {result && (
           <div className="mt-6 rounded-2xl border border-line bg-paper/60 p-5">
@@ -138,28 +173,33 @@ export function OfferCheckTool({ applications, initialApplicationId }: OfferChec
               {result.percentage >= 60
                 ? "Risque élevé : cette annonce ressemble beaucoup à une offre-leurre d'école."
                 : result.percentage >= 40
-                  ? "Risque modéré : plusieurs signaux d'offre-leurre d'école sont présents."
+                  ? "Risque modéré : plusieurs éléments évoquent une offre-leurre d'école."
                   : result.percentage > 0
-                    ? "Risque faible : peu de signaux détectés."
-                    : "Aucun signal caractéristique détecté."}
+                    ? "Risque faible : peu d'éléments suspects."
+                    : "Aucun élément suspect détecté."}
             </p>
 
-            {result.matchedSignals.length > 0 && (
+            {result.reasons.length > 0 && (
               <div className="mt-4">
-                <p className="text-sm font-semibold text-warn">Signaux repérés</p>
+                <p className="text-sm font-semibold text-warn">Éléments repérés</p>
                 <ul className="mt-1.5 space-y-1">
-                  {result.matchedSignals.map((s, i) => (
-                    <li key={i} className="text-sm text-ink/80">• {s}</li>
+                  {result.reasons.map((r, i) => (
+                    <li key={i} className="text-sm text-ink/80">• {r}</li>
                   ))}
                 </ul>
               </div>
             )}
 
             <p className="mt-4 text-xs text-muted">
-              Cette estimation est basée sur des tournures et un vocabulaire courants dans ce type d&apos;annonces,
-              pas une certitude absolue. Vérifiez toujours par vous-même (nom réel de l&apos;entreprise, description
-              concrète des missions) avant de vous engager.
+              Cette estimation reste une aide à la décision, pas une certitude absolue. Vérifiez toujours par
+              vous-même (nom réel de l&apos;entreprise, description concrète des missions) avant de vous engager.
             </p>
+
+            {!result.usedRealAi && (
+              <p className="mt-2 text-xs text-warn">
+                Analyse simplifiée par mots-clés (aucune clé IA configurée) — moins fiable qu'une analyse par IA.
+              </p>
+            )}
           </div>
         )}
       </Card>
@@ -172,8 +212,8 @@ export function OfferCheckTool({ applications, initialApplicationId }: OfferChec
           rapport avec une vraie entreprise recruteuse.
         </p>
         <p className="mt-3 text-sm text-ink/80">
-          Ce détecteur repère les tournures typiques de ce genre d&apos;annonces (journées portes ouvertes, admissions,
-          frais de scolarité, ciblage des lycéens...) pour vous éviter de perdre du temps.
+          Cette analyse est réalisée par une IA qui lit et comprend le texte de l&apos;offre, plutôt que de simplement
+          chercher des mots-clés — elle s&apos;adapte donc à des formulations nouvelles ou inhabituelles.
         </p>
       </Card>
     </div>

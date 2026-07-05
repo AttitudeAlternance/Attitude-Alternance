@@ -163,6 +163,7 @@ données depuis la page "Mon profil" (droit à l'effacement RGPD).
 - **Dashboard** : statistiques (candidatures envoyées, en attente, entretiens, relances à faire), objectif hebdomadaire de candidatures paramétrable avec barre de progression, et accès rapides.
 - **CRM de candidatures** : ajout, modification, suppression, filtre par statut, recherche par entreprise/poste, tri par date, mise en évidence des relances dues ou en retard, estimation d'email de contact (schémas courants, à utiliser avec parcimonie), récupération automatique du texte d'une offre depuis son lien.
 - **Score de correspondance CV ↔ offre** : compare le résumé de CV de l'étudiant à la description d'une offre pour estimer ses chances, avec points forts et axes à renforcer.
+- **Détection d'offres-écoles** : analyse par IA (Claude) pour repérer les annonces publiées par des écoles/organismes de formation à des fins de captation de candidats plutôt que de vraies offres d'entreprise — pourcentage de risque et éléments repérés.
 - **Rappels de relance par email** : une tâche planifiée quotidienne envoie un récapitulatif des relances dues à chaque étudiant concerné (nécessite Resend, voir section dédiée).
 - **Générateur de messages IA** : mail de candidature, mail de relance, message LinkedIn, mail de remerciement — rédigés par Claude (si clé configurée) en tenant compte de l'annonce et du CV, avec choix du ton, régénération ("autre proposition") et historique.
 - **Lecture de CV** : dépôt d'un CV au format PDF, extraction et résumé automatique du profil.
