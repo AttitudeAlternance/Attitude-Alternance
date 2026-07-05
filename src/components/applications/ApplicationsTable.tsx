@@ -82,6 +82,11 @@ export function ApplicationsTable({ applications, onEdit, onDelete }: Applicatio
                         ✦ Générer un message
                       </Button>
                     </Link>
+                    <Link href={`/dashboard/match-score?applicationId=${app.id}`}>
+                      <Button size="sm" variant="secondary">
+                        🎯 Score
+                      </Button>
+                    </Link>
                     <Button size="sm" variant="ghost" onClick={() => onEdit(app)}>
                       Modifier
                     </Button>

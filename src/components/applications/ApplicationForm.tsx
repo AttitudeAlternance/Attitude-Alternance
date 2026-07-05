@@ -3,33 +3,41 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea, Select, FieldHint } from "@/components/ui/Form";
-import { cn, addBusinessDays } from "@/lib/utils";
+import { addBusinessDays } from "@/lib/utils";
 import { APPLICATION_STATUSES, STATUS_LABELS, type Application, type ApplicationInput } from "@/lib/types";
 
 // Nombre de jours ouvrés recommandé avant une première relance après candidature
 const RECOMMENDED_FOLLOWUP_DAYS = 7;
 
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 interface ApplicationFormProps {
   initialValue?: Application | null;
   onSubmit: (values: ApplicationInput) => Promise<void>;
   onCancel: () => void;
-  cvSummary?: string | null;
 }
 
-const emptyValue: ApplicationInput = {
-  company: "",
-  role: "",
-  offer_url: "",
-  applied_at: "",
-  status: "a_candidater",
-  linkedin_contact: "",
-  contact_email: "",
-  next_followup_at: "",
-  comment: "",
-  job_description: "",
-};
+// Pour une nouvelle candidature, on considère qu'elle est faite au moment de l'ajout :
+// la date du jour et la relance suggérée sont donc préremplies automatiquement.
+function buildEmptyValue(): ApplicationInput {
+  const today = todayIso();
+  return {
+    company: "",
+    role: "",
+    offer_url: "",
+    applied_at: today,
+    status: "a_candidater",
+    linkedin_contact: "",
+    contact_email: "",
+    next_followup_at: addBusinessDays(today, RECOMMENDED_FOLLOWUP_DAYS),
+    comment: "",
+    job_description: "",
+  };
+}
 
-export function ApplicationForm({ initialValue, onSubmit, onCancel, cvSummary }: ApplicationFormProps) {
+export function ApplicationForm({ initialValue, onSubmit, onCancel }: ApplicationFormProps) {
   const [values, setValues] = useState<ApplicationInput>(
     initialValue
       ? {
@@ -44,11 +52,11 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel, cvSummary }:
           comment: initialValue.comment ?? "",
           job_description: initialValue.job_description ?? "",
         }
-      : emptyValue
+      : buildEmptyValue()
   );
   const [loading, setLoading] = useState(false);
-  // Par défaut, on ne montre que l'essentiel. En modification, on ouvre directement
-  // le détail puisque des informations y sont probablement déjà renseignées.
+  // Le contact et l'email sont un peu moins essentiels : repliés par défaut à l'ajout,
+  // ouverts directement en modification puisqu'ils sont probablement déjà remplis.
   const [showDetails, setShowDetails] = useState(Boolean(initialValue));
 
   const [emailDomain, setEmailDomain] = useState("");
@@ -61,9 +69,6 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel, cvSummary }:
   const [fetchingOffer, setFetchingOffer] = useState(false);
   const [fetchOfferError, setFetchOfferError] = useState<string | null>(null);
   const [fetchOfferSuccess, setFetchOfferSuccess] = useState(false);
-  const [matching, setMatching] = useState(false);
-  const [matchResult, setMatchResult] = useState<{ score: number; strengths: string[]; gaps: string[]; usedRealAi: boolean } | null>(null);
-  const [matchError, setMatchError] = useState<string | null>(null);
 
   function update<K extends keyof ApplicationInput>(key: K, value: ApplicationInput[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -147,45 +152,10 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel, cvSummary }:
 
       update("job_description", data.text);
       setFetchOfferSuccess(true);
-      setShowDetails(true);
     } catch {
       setFetchOfferError("Une erreur est survenue. Copiez-collez le texte de l'offre manuellement.");
     } finally {
       setFetchingOffer(false);
-    }
-  }
-
-  async function handleMatchScore() {
-    setMatchError(null);
-    setMatchResult(null);
-
-    if (!cvSummary) {
-      setMatchError("Déposez d'abord votre CV dans votre profil pour utiliser cette analyse.");
-      return;
-    }
-    if (!values.job_description) {
-      setMatchError("Renseignez d'abord la description de l'offre ci-dessus.");
-      return;
-    }
-
-    setMatching(true);
-    try {
-      const res = await fetch("/api/match-score", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ cvSummary, jobDescription: values.job_description }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setMatchError(data.error || "Analyse impossible.");
-        return;
-      }
-      setMatchResult(data);
-    } catch {
-      setMatchError("Une erreur est survenue lors de l'analyse.");
-    } finally {
-      setMatching(false);
     }
   }
 
@@ -212,7 +182,7 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel, cvSummary }:
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* --- Essentiel : le strict minimum pour ajouter une candidature en quelques secondes --- */}
+      {/* --- Essentiel : entreprise, poste, statut, et l'offre (pour générer un bon message ensuite) --- */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <Label htmlFor="company">Entreprise *</Label>
@@ -251,21 +221,58 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel, cvSummary }:
         </Select>
       </div>
 
+      <div>
+        <Label htmlFor="offer_url">Lien de l&apos;offre (optionnel)</Label>
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            id="offer_url"
+            type="url"
+            value={values.offer_url ?? ""}
+            onChange={(e) => update("offer_url", e.target.value)}
+            placeholder="https://..."
+            className="flex-1 min-w-[200px]"
+          />
+          <Button type="button" variant="secondary" size="sm" onClick={handleFetchOffer} disabled={fetchingOffer}>
+            {fetchingOffer ? "Lecture..." : "↓ Récupérer automatiquement"}
+          </Button>
+        </div>
+        {fetchOfferError && <p className="mt-1.5 text-xs text-warn">{fetchOfferError}</p>}
+        {fetchOfferSuccess && (
+          <p className="mt-1.5 text-xs text-success">
+            ✓ Texte récupéré et ajouté dans « Description de l&apos;offre » ci-dessous.
+          </p>
+        )}
+      </div>
+
+      <div>
+        <Label htmlFor="job_description">Description de l&apos;offre (optionnel)</Label>
+        <Textarea
+          id="job_description"
+          value={values.job_description ?? ""}
+          onChange={(e) => update("job_description", e.target.value)}
+          placeholder="Collez ici le texte de l'offre (missions, profil recherché...) pour des messages générés plus pertinents."
+          className="min-h-[120px]"
+        />
+        <FieldHint>
+          Utilisée automatiquement pour générer un message ou calculer un score de correspondance avec votre CV.
+        </FieldHint>
+      </div>
+
       {!showDetails && (
         <button
           type="button"
           onClick={() => setShowDetails(true)}
           className="text-sm font-medium text-primary hover:underline"
         >
-          + Ajouter plus de détails (optionnel : offre, contact, relance, description...)
+          + Ajouter le contact et une date de relance personnalisée (optionnel)
         </button>
       )}
 
-      {/* --- Optionnel : tout le reste, replié par défaut pour ne pas alourdir l'ajout --- */}
+      {/* --- Optionnel : contact, email, dates --- */}
       {showDetails && (
         <div className="space-y-4 rounded-2xl border border-line bg-paper/40 p-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Détails complémentaires (optionnel)</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Contact et relance (optionnel)</p>
             <button
               type="button"
               onClick={() => setShowDetails(false)}
@@ -273,33 +280,6 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel, cvSummary }:
             >
               Masquer
             </button>
-          </div>
-
-          <div>
-            <Label htmlFor="offer_url">Lien de l&apos;offre</Label>
-            <div className="flex flex-wrap items-center gap-2">
-              <Input
-                id="offer_url"
-                type="url"
-                value={values.offer_url ?? ""}
-                onChange={(e) => update("offer_url", e.target.value)}
-                placeholder="https://..."
-                className="flex-1 min-w-[200px]"
-              />
-              <Button type="button" variant="secondary" size="sm" onClick={handleFetchOffer} disabled={fetchingOffer}>
-                {fetchingOffer ? "Lecture..." : "↓ Récupérer automatiquement"}
-              </Button>
-            </div>
-            {fetchOfferError && <p className="mt-1.5 text-xs text-warn">{fetchOfferError}</p>}
-            {fetchOfferSuccess && (
-              <p className="mt-1.5 text-xs text-success">
-                ✓ Texte récupéré et ajouté dans "Description de l&apos;offre" ci-dessous — vérifiez qu&apos;il est correct.
-              </p>
-            )}
-            <FieldHint>
-              Fonctionne sur la plupart des pages carrière d&apos;entreprise. Ne fonctionne pas sur LinkedIn, Indeed ou
-              Welcome to the Jungle (ces sites bloquent la récupération automatique) : collez le texte manuellement dans ce cas.
-            </FieldHint>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -312,12 +292,13 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel, cvSummary }:
                 onChange={(e) => {
                   const newDate = e.target.value;
                   update("applied_at", newDate);
-                  // Suggère automatiquement une date de relance si elle n'a pas déjà été fixée manuellement
+                  // Recalcule la suggestion de relance si elle n'a pas été fixée manuellement
                   if (newDate && !values.next_followup_at) {
                     update("next_followup_at", addBusinessDays(newDate, RECOMMENDED_FOLLOWUP_DAYS));
                   }
                 }}
               />
+              <FieldHint>Préremplie à aujourd&apos;hui, modifiable si besoin.</FieldHint>
             </div>
             <div>
               <Label htmlFor="next_followup_at">Date de relance prévue</Label>
@@ -328,7 +309,7 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel, cvSummary }:
                 onChange={(e) => update("next_followup_at", e.target.value)}
               />
               <FieldHint>
-                Suggérée automatiquement à {RECOMMENDED_FOLLOWUP_DAYS} jours ouvrés après la candidature (modifiable).
+                Suggérée à {RECOMMENDED_FOLLOWUP_DAYS} jours ouvrés après la candidature (modifiable).
               </FieldHint>
             </div>
           </div>
@@ -412,81 +393,6 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel, cvSummary }:
                       ))}
                     </div>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="job_description">Description de l&apos;offre</Label>
-            <Textarea
-              id="job_description"
-              value={values.job_description ?? ""}
-              onChange={(e) => update("job_description", e.target.value)}
-              placeholder="Collez ici le texte complet de l'offre (missions, profil recherché...)."
-              className="min-h-[120px]"
-            />
-            <FieldHint>Utilisée automatiquement par le générateur de messages IA si vous liez cette candidature.</FieldHint>
-          </div>
-
-          <div className="rounded-xl border border-dashed border-line bg-white p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="text-sm font-medium text-ink">🎯 Score de correspondance avec mon CV</p>
-                <p className="mt-1 text-xs text-muted">
-                  {cvSummary
-                    ? "Compare votre profil à cette offre pour évaluer vos chances et repérer ce qui manque."
-                    : "Déposez votre CV dans votre profil pour activer cette analyse."}
-                </p>
-              </div>
-              <Button type="button" variant="secondary" size="sm" onClick={handleMatchScore} disabled={matching || !cvSummary}>
-                {matching ? "Analyse..." : "Analyser"}
-              </Button>
-            </div>
-
-            {matchError && <p className="mt-2 text-xs text-danger">{matchError}</p>}
-
-            {matchResult && (
-              <div className="mt-3 rounded-lg bg-paper/60 p-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-line">
-                    <div
-                      className={cn(
-                        "h-full rounded-full",
-                        matchResult.score >= 70 ? "bg-success" : matchResult.score >= 40 ? "bg-warn" : "bg-danger"
-                      )}
-                      style={{ width: `${matchResult.score}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-semibold text-ink">{matchResult.score}%</span>
-                </div>
-
-                {matchResult.strengths.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-xs font-medium text-success">Points forts</p>
-                    <ul className="mt-1 space-y-1">
-                      {matchResult.strengths.map((s, i) => (
-                        <li key={i} className="text-xs text-ink/80">• {s}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {matchResult.gaps.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-xs font-medium text-warn">À renforcer ou mentionner</p>
-                    <ul className="mt-1 space-y-1">
-                      {matchResult.gaps.map((g, i) => (
-                        <li key={i} className="text-xs text-ink/80">• {g}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {!matchResult.usedRealAi && (
-                  <p className="mt-3 text-xs text-muted">
-                    Estimation simplifiée basée sur des mots-clés (aucune clé IA configurée) — le résultat avec Claude actif est plus fiable.
-                  </p>
                 )}
               </div>
             )}

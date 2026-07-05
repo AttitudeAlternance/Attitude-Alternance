@@ -22,12 +22,11 @@ interface ApplicationsBoardProps {
   userId: string;
   plan: "free" | "premium";
   freeLimit: number;
-  cvSummary: string | null;
 }
 
 type SortOrder = "recent" | "ancien" | "relance";
 
-export function ApplicationsBoard({ initialApplications, userId, plan, freeLimit, cvSummary }: ApplicationsBoardProps) {
+export function ApplicationsBoard({ initialApplications, userId, plan, freeLimit }: ApplicationsBoardProps) {
   const [applications, setApplications] = useState<Application[]>(initialApplications);
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">("all");
   const [sortOrder, setSortOrder] = useState<SortOrder>("recent");
@@ -199,7 +198,7 @@ export function ApplicationsBoard({ initialApplications, userId, plan, freeLimit
         widthClass="max-w-2xl"
       >
         {error && <p className="mb-3 rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger">{error}</p>}
-        <ApplicationForm initialValue={editingApp} onSubmit={handleSubmit} onCancel={() => setModalOpen(false)} cvSummary={cvSummary} />
+        <ApplicationForm initialValue={editingApp} onSubmit={handleSubmit} onCancel={() => setModalOpen(false)} />
       </Modal>
 
       <Modal
