@@ -1,6 +1,15 @@
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 
-const resources = [
+interface ResourceCategory {
+  category: string;
+  icon: string;
+  items: string[];
+  link?: string;
+  linkLabel?: string;
+}
+
+const resources: ResourceCategory[] = [
   {
     category: "Conseils CV",
     icon: "📄",
@@ -25,11 +34,13 @@ const resources = [
     category: "Conseils entretien",
     icon: "🎤",
     items: [
-      "Préparez 3 exemples concrets de vos expériences (projet, stage, association).",
-      "Renseignez-vous sur l'entreprise : activité, actualité récente, valeurs.",
-      "Préparez 2 à 3 questions à poser au recruteur en fin d'entretien.",
-      "Envoyez un mail de remerciement dans les 24h suivant l'entretien.",
+      "Maîtrisez la fiche de poste : soyez capable de citer les missions sans relire l'annonce.",
+      "Préparez une présentation chronologique de 2 à 3 minutes (parcours, expériences, projet).",
+      "Renseignez-vous sur l'entreprise : activité, valeurs, actualité, réseaux sociaux.",
+      "Préparez vos qualités/défauts avec des exemples concrets, et 2-3 questions à poser en fin d'entretien.",
     ],
+    link: "/dashboard/resources/entretien",
+    linkLabel: "📖 Lire le guide complet de préparation à l'entretien",
   },
   {
     category: "Méthode de relance",
@@ -90,6 +101,14 @@ export default function ResourcesPage() {
                 </li>
               ))}
             </ul>
+            {section.link && (
+              <Link
+                href={section.link}
+                className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+              >
+                {section.linkLabel} →
+              </Link>
+            )}
           </Card>
         ))}
       </div>
