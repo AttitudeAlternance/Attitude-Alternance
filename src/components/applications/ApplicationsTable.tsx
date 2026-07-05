@@ -4,6 +4,7 @@ import Link from "next/link";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { formatDate, isDueToday, isOverdue, cn } from "@/lib/utils";
+import { detectSchoolOffer } from "@/lib/detectSchoolOffer";
 import type { Application } from "@/lib/types";
 
 interface ApplicationsTableProps {
@@ -52,6 +53,19 @@ export function ApplicationsTable({ applications, onEdit, onDelete }: Applicatio
                       voir l&apos;offre
                     </a>
                   )}
+                  {(() => {
+                    const check = detectSchoolOffer(app.job_description ?? "", app.offer_url);
+                    if (!check.isSuspicious) return null;
+                    return (
+                      <Link
+                        href={`/dashboard/offer-check?applicationId=${app.id}`}
+                        className="ml-1.5 inline-flex items-center rounded-full bg-warn-50 px-2 py-0.5 text-[10px] font-medium text-warn hover:underline"
+                        title="Voir le détail de l'analyse"
+                      >
+                        ⚠ {check.percentage}% offre école
+                      </Link>
+                    );
+                  })()}
                 </td>
                 <td className="px-4 py-3 text-ink/80">{app.role}</td>
                 <td className="px-4 py-3 font-mono text-xs text-muted">{formatDate(app.applied_at)}</td>
@@ -85,6 +99,11 @@ export function ApplicationsTable({ applications, onEdit, onDelete }: Applicatio
                     <Link href={`/dashboard/match-score?applicationId=${app.id}`}>
                       <Button size="sm" variant="secondary">
                         🎯 Score
+                      </Button>
+                    </Link>
+                    <Link href={`/dashboard/offer-check?applicationId=${app.id}`}>
+                      <Button size="sm" variant="secondary">
+                        🔍 Vérifier l&apos;offre
                       </Button>
                     </Link>
                     <Button size="sm" variant="ghost" onClick={() => onEdit(app)}>

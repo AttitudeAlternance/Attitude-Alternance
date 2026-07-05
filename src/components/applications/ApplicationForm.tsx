@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea, Select, FieldHint } from "@/components/ui/Form";
 import { addBusinessDays } from "@/lib/utils";
+import { detectSchoolOffer } from "@/lib/detectSchoolOffer";
 import { APPLICATION_STATUSES, STATUS_LABELS, type Application, type ApplicationInput } from "@/lib/types";
 
 // Nombre de jours ouvrés recommandé avant une première relance après candidature
@@ -180,6 +181,11 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
 
   const allFoundEmails = [emailBest, ...emailAlternatives].filter(Boolean) as string[];
 
+  const schoolOfferCheck = useMemo(
+    () => detectSchoolOffer(values.job_description ?? "", values.offer_url),
+    [values.job_description, values.offer_url]
+  );
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* --- Essentiel : entreprise, poste, statut, et l'offre (pour générer un bon message ensuite) --- */}
@@ -256,6 +262,22 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
         <FieldHint>
           Utilisée automatiquement pour générer un message ou calculer un score de correspondance avec votre CV.
         </FieldHint>
+
+        {schoolOfferCheck.isSuspicious && (
+          <div className="mt-3 rounded-lg bg-warn-50 p-3">
+            <p className="text-sm font-medium text-warn">
+              ⚠ {schoolOfferCheck.percentage}% de risque que ce soit une offre publiée par une école pour capter des
+              candidats, plutôt qu&apos;une vraie offre d&apos;entreprise.
+            </p>
+            <p className="mt-1.5 text-xs text-warn/80">
+              Signaux repérés : {schoolOfferCheck.matchedSignals.join(" · ")}
+            </p>
+            <p className="mt-1.5 text-xs text-muted">
+              Ceci reste une estimation basée sur des tournures courantes, pas une certitude — vérifiez par
+              vous-même avant d&apos;y consacrer du temps.
+            </p>
+          </div>
+        )}
       </div>
 
       {!showDetails && (

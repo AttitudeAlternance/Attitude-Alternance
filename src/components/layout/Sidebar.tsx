@@ -10,6 +10,7 @@ const links = [
   { href: "/dashboard/applications", label: "Mes candidatures", icon: TableIcon },
   { href: "/dashboard/messages", label: "Générateur IA", icon: SparkleIcon },
   { href: "/dashboard/match-score", label: "Score de correspondance", icon: TargetIcon },
+  { href: "/dashboard/offer-check", label: "Vérifier une offre", icon: ShieldIcon },
   { href: "/dashboard/resources", label: "Ressources", icon: BookIcon },
   { href: "/dashboard/profile", label: "Mon profil", icon: UserIcon },
 ];
@@ -99,6 +100,14 @@ function TargetIcon(props: React.SVGProps<SVGSVGElement>) {
       <circle cx="12" cy="12" r="8" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="12" cy="12" r="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+function ShieldIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3Z" />
+      <path d="M9.5 12l1.8 1.8L14.5 10" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
