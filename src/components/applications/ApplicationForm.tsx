@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea, Select, FieldHint } from "@/components/ui/Form";
-import { cn } from "@/lib/utils";
+import { cn, addBusinessDays } from "@/lib/utils";
 import { APPLICATION_STATUSES, STATUS_LABELS, type Application, type ApplicationInput } from "@/lib/types";
+
+// Nombre de jours ouvrés recommandé avant une première relance après candidature
+const RECOMMENDED_FOLLOWUP_DAYS = 7;
 
 interface ApplicationFormProps {
   initialValue?: Application | null;
@@ -306,7 +309,14 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel, cvSummary }:
                 id="applied_at"
                 type="date"
                 value={values.applied_at ?? ""}
-                onChange={(e) => update("applied_at", e.target.value)}
+                onChange={(e) => {
+                  const newDate = e.target.value;
+                  update("applied_at", newDate);
+                  // Suggère automatiquement une date de relance si elle n'a pas déjà été fixée manuellement
+                  if (newDate && !values.next_followup_at) {
+                    update("next_followup_at", addBusinessDays(newDate, RECOMMENDED_FOLLOWUP_DAYS));
+                  }
+                }}
               />
             </div>
             <div>
@@ -317,6 +327,9 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel, cvSummary }:
                 value={values.next_followup_at ?? ""}
                 onChange={(e) => update("next_followup_at", e.target.value)}
               />
+              <FieldHint>
+                Suggérée automatiquement à {RECOMMENDED_FOLLOWUP_DAYS} jours ouvrés après la candidature (modifiable).
+              </FieldHint>
             </div>
           </div>
 

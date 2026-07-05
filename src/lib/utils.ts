@@ -39,6 +39,24 @@ export function isOverdue(value: string | null | undefined): boolean {
   return target.getTime() < today.getTime();
 }
 
+// Ajoute un nombre de jours ouvrés (lundi-vendredi) à une date, au format YYYY-MM-DD.
+// Utilisé pour suggérer automatiquement une date de relance pertinente.
+export function addBusinessDays(dateIso: string, businessDays: number): string {
+  const date = new Date(dateIso);
+  if (Number.isNaN(date.getTime())) return dateIso;
+
+  let remaining = businessDays;
+  while (remaining > 0) {
+    date.setDate(date.getDate() + 1);
+    const day = date.getDay(); // 0 = dimanche, 6 = samedi
+    if (day !== 0 && day !== 6) {
+      remaining -= 1;
+    }
+  }
+
+  return date.toISOString().slice(0, 10);
+}
+
 // Renvoie le lundi 00:00 de la semaine en cours (semaine du lundi au dimanche)
 function getStartOfWeek(reference: Date): Date {
   const date = new Date(reference);
