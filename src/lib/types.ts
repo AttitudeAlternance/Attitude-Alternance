@@ -82,6 +82,7 @@ export interface Profile {
   ai_calls_reset_at: string;
   email: string | null;
   terms_accepted_at: string | null;
+  total_applications_created: number;
   created_at: string;
   updated_at: string;
 }

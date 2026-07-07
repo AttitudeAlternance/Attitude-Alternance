@@ -22,12 +22,14 @@ interface ApplicationsBoardProps {
   userId: string;
   plan: "free" | "premium";
   freeLimit: number;
+  initialTotalCreated: number;
 }
 
 type SortOrder = "recent" | "ancien" | "relance";
 
-export function ApplicationsBoard({ initialApplications, userId, plan, freeLimit }: ApplicationsBoardProps) {
+export function ApplicationsBoard({ initialApplications, userId, plan, freeLimit, initialTotalCreated }: ApplicationsBoardProps) {
   const [applications, setApplications] = useState<Application[]>(initialApplications);
+  const [totalCreated, setTotalCreated] = useState(initialTotalCreated);
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">("all");
   const [sortOrder, setSortOrder] = useState<SortOrder>("recent");
   const [search, setSearch] = useState("");
@@ -38,7 +40,9 @@ export function ApplicationsBoard({ initialApplications, userId, plan, freeLimit
   const [error, setError] = useState<string | null>(null);
 
   const supabase = createClient();
-  const atLimit = plan === "free" && applications.length >= freeLimit;
+  // Basé sur le compteur cumulé (jamais réinitialisé par une suppression),
+  // pour empêcher de contourner la limite gratuite en supprimant d'anciennes candidatures.
+  const atLimit = plan === "free" && totalCreated >= freeLimit;
 
   const filtered = useMemo(() => {
     let list = [...applications];
@@ -103,6 +107,7 @@ export function ApplicationsBoard({ initialApplications, userId, plan, freeLimit
         return;
       }
       setApplications((prev) => [data as Application, ...prev]);
+      setTotalCreated((prev) => prev + 1);
     }
     setModalOpen(false);
   }
@@ -154,9 +159,9 @@ export function ApplicationsBoard({ initialApplications, userId, plan, freeLimit
         <Button onClick={openCreateModal}>+ Ajouter une candidature</Button>
       </div>
 
-      {plan === "free" && applications.length >= Math.round(freeLimit * 0.8) && (
+      {plan === "free" && totalCreated >= Math.round(freeLimit * 0.8) && (
         <p className="mb-4 rounded-lg bg-warn-50 px-3 py-2 text-xs font-medium text-warn">
-          {applications.length}/{freeLimit} candidatures utilisées sur l&apos;offre gratuite.{" "}
+          {totalCreated}/{freeLimit} candidatures utilisées sur l&apos;offre gratuite.{" "}
           <Link href="/dashboard/profile" className="underline">
             Passer à Étudiant+
           </Link>{" "}

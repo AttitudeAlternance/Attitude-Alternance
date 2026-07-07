@@ -17,7 +17,7 @@ export default async function ApplicationsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan")
+    .select("plan, total_applications_created")
     .eq("id", userData.user?.id)
     .maybeSingle();
 
@@ -35,6 +35,7 @@ export default async function ApplicationsPage() {
         userId={userData.user?.id ?? ""}
         plan={(profile?.plan as "free" | "premium") ?? "free"}
         freeLimit={FREE_APPLICATIONS_LIMIT}
+        initialTotalCreated={profile?.total_applications_created ?? (applications ?? []).length}
       />
     </div>
   );
