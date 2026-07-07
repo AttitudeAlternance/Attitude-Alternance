@@ -39,7 +39,7 @@ const resources: ResourceCategory[] = [
       "Renseignez-vous sur l'entreprise : activité, valeurs, actualité, réseaux sociaux.",
       "Préparez vos qualités/défauts avec des exemples concrets, et 2-3 questions à poser en fin d'entretien.",
     ],
-    link: "/dashboard/resources/entretien",
+    link: "/conseils/preparer-entretien-alternance",
     linkLabel: "📖 Lire le guide complet de préparation à l'entretien",
   },
   {
@@ -104,6 +104,8 @@ export default function ResourcesPage() {
             {section.link && (
               <Link
                 href={section.link}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
               >
                 {section.linkLabel} →

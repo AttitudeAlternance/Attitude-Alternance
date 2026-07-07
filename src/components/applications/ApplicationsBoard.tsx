@@ -23,11 +23,19 @@ interface ApplicationsBoardProps {
   plan: "free" | "premium";
   freeLimit: number;
   initialTotalCreated: number;
+  bonusApplications: number;
 }
 
 type SortOrder = "recent" | "ancien" | "relance";
 
-export function ApplicationsBoard({ initialApplications, userId, plan, freeLimit, initialTotalCreated }: ApplicationsBoardProps) {
+export function ApplicationsBoard({
+  initialApplications,
+  userId,
+  plan,
+  freeLimit,
+  initialTotalCreated,
+  bonusApplications,
+}: ApplicationsBoardProps) {
   const [applications, setApplications] = useState<Application[]>(initialApplications);
   const [totalCreated, setTotalCreated] = useState(initialTotalCreated);
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">("all");
@@ -40,9 +48,9 @@ export function ApplicationsBoard({ initialApplications, userId, plan, freeLimit
   const [error, setError] = useState<string | null>(null);
 
   const supabase = createClient();
-  // Basé sur le compteur cumulé (jamais réinitialisé par une suppression),
-  // pour empêcher de contourner la limite gratuite en supprimant d'anciennes candidatures.
-  const atLimit = plan === "free" && totalCreated >= freeLimit;
+  // La limite gratuite s'étend avec les bonus de parrainage.
+  const effectiveLimit = freeLimit + bonusApplications;
+  const atLimit = plan === "free" && totalCreated >= effectiveLimit;
 
   const filtered = useMemo(() => {
     let list = [...applications];
@@ -159,9 +167,10 @@ export function ApplicationsBoard({ initialApplications, userId, plan, freeLimit
         <Button onClick={openCreateModal}>+ Ajouter une candidature</Button>
       </div>
 
-      {plan === "free" && totalCreated >= Math.round(freeLimit * 0.8) && (
+      {plan === "free" && totalCreated >= Math.round(effectiveLimit * 0.8) && (
         <p className="mb-4 rounded-lg bg-warn-50 px-3 py-2 text-xs font-medium text-warn">
-          {totalCreated}/{freeLimit} candidatures utilisées sur l&apos;offre gratuite.{" "}
+          {totalCreated}/{effectiveLimit} candidatures utilisées sur l&apos;offre gratuite
+          {bonusApplications > 0 ? ` (dont ${bonusApplications} bonus parrainage)` : ""}.{" "}
           <Link href="/dashboard/profile" className="underline">
             Passer à Étudiant+
           </Link>{" "}
@@ -228,11 +237,11 @@ export function ApplicationsBoard({ initialApplications, userId, plan, freeLimit
         open={limitModalOpen}
         onClose={() => setLimitModalOpen(false)}
         title="Limite de l'offre gratuite atteinte"
-        description={`L'offre gratuite est limitée à ${freeLimit} candidatures suivies.`}
+        description={`L'offre gratuite est limitée à ${effectiveLimit} candidatures suivies.`}
         widthClass="max-w-md"
       >
         <p className="text-sm text-muted">
-          Passez à Étudiant+ pour suivre un nombre illimité de candidatures et débloquer un usage étendu du générateur IA.
+          Passez à Étudiant+ pour suivre un nombre illimité de candidatures et débloquer un usage étendu du générateur IA. Vous pouvez aussi parrainer un ami pour débloquer 5 candidatures supplémentaires gratuitement.
         </p>
         <div className="mt-5 flex justify-end gap-2.5">
           <Button variant="ghost" onClick={() => setLimitModalOpen(false)}>

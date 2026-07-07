@@ -83,6 +83,9 @@ export interface Profile {
   email: string | null;
   terms_accepted_at: string | null;
   total_applications_created: number;
+  referral_code: string | null;
+  referred_by: string | null;
+  bonus_applications: number;
   created_at: string;
   updated_at: string;
 }

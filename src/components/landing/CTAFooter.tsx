@@ -31,6 +31,12 @@ export function Footer() {
           <span className="font-display text-sm font-semibold text-ink">Attitude Alternance</span>
         </div>
         <nav className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted">
+          <Link href="/a-propos" className="hover:text-ink hover:underline">
+            À propos
+          </Link>
+          <Link href="/conseils" className="hover:text-ink hover:underline">
+            Conseils
+          </Link>
           <Link href="/mentions-legales" className="hover:text-ink hover:underline">
             Mentions légales
           </Link>

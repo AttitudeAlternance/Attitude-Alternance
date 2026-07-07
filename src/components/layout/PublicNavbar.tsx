@@ -11,6 +11,9 @@ export function PublicNavbar() {
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
+          <Link href="/conseils" className="text-sm text-muted hover:text-ink transition-colors">
+            Conseils
+          </Link>
           <a href="#fonctionnement" className="text-sm text-muted hover:text-ink transition-colors">
             Fonctionnement
           </a>

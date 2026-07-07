@@ -169,7 +169,11 @@ données depuis la page "Mon profil" (droit à l'effacement RGPD).
 - **Lecture de CV** : dépôt d'un CV au format PDF, extraction et résumé automatique du profil.
 - **Ressources** : conseils CV, LinkedIn, entretien, méthode de relance, organisation, exemples de messages.
 - **Profil** : informations personnelles, plan d'abonnement (gratuit / Étudiant+ via Stripe), avec indicateur de complétion.
-- **Offre gratuite / Étudiant+** : la version gratuite est limitée à 15 candidatures suivies et un quota IA quotidien restreint ; l'offre Étudiant+ (paiement Stripe) lève ces limites.
+- **Offre gratuite / Étudiant+** : la version gratuite est limitée à 15 candidatures suivies (compteur cumulé, insensible aux suppressions) et un quota IA quotidien restreint ; l'offre Étudiant+ (paiement Stripe) lève ces limites.
+- **Programme de parrainage** : chaque étudiant a un lien de parrainage personnel ; un nouvel inscrit via ce lien débloque 5 candidatures bonus pour lui et son parrain.
+- **Contenu public (SEO)** : les guides longs (ex : préparation à l'entretien) sont accessibles publiquement sur `/conseils`, avec un appel à l'action vers l'inscription — indexables par les moteurs de recherche.
+- **Page "À propos"** (`/a-propos`) : signal de confiance pour les nouveaux visiteurs, à personnaliser avec votre histoire.
+- **Vercel Analytics** : intégré (composant `<Analytics />`), à activer dans Vercel (Project → Analytics → Enable) pour suivre les visites et inscriptions.
 
 ## Notes techniques
 

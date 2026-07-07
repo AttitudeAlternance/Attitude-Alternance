@@ -20,7 +20,10 @@ export function Hero() {
           <h1 className="mt-5 font-display text-4xl font-bold leading-[1.1] text-ink sm:text-5xl">
             Trouvez votre alternance plus vite, sans perdre le fil.
           </h1>
-          <p className="mt-5 max-w-md text-base text-muted sm:text-lg">
+          <p className="mt-4 max-w-md text-base font-medium text-primary-600 sm:text-lg">
+            L&apos;assistant qui centralise vos candidatures, personnalise vos messages, et repère les pièges avant vous.
+          </p>
+          <p className="mt-3 max-w-md text-base text-muted sm:text-lg">
             Attitude Alternance centralise vos candidatures, rédige vos mails avec l&apos;IA
             et vous rappelle qui relancer, au bon moment.
           </p>

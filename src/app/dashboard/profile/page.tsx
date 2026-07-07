@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { CvUpload } from "@/components/profile/CvUpload";
 import { PlanCard } from "@/components/profile/PlanCard";
+import { ReferralCard } from "@/components/profile/ReferralCard";
 import { DeleteAccountCard } from "@/components/profile/DeleteAccountCard";
 import type { Profile } from "@/lib/types";
 
@@ -35,6 +36,11 @@ export default async function ProfilePage({
 
       <div className="space-y-6">
         <PlanCard plan={typedProfile?.plan ?? "free"} justUpgraded={searchParams.upgraded === "1"} />
+
+        <ReferralCard
+          referralCode={typedProfile?.referral_code ?? null}
+          bonusApplications={typedProfile?.bonus_applications ?? 0}
+        />
 
         <CvUpload
           initialSummary={typedProfile?.cv_summary ?? null}

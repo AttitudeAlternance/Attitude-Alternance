@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -13,11 +13,19 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  // Lit le code de parrainage depuis l'URL (?ref=CODE), sans avoir besoin de useSearchParams
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) setReferralCode(ref);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,6 +55,19 @@ export default function SignupPage() {
     // Enregistre la date d'acceptation des CGU sur le profil (preuve de consentement)
     if (data.user) {
       await supabase.from("profiles").upsert({ id: data.user.id, terms_accepted_at: new Date().toISOString() });
+    }
+
+    // Si un code de parrainage était présent dans le lien, on l'enregistre (bonus des deux côtés)
+    if (data.session && referralCode) {
+      try {
+        await fetch("/api/register-referral", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ code: referralCode }),
+        });
+      } catch {
+        // Un parrainage raté ne doit jamais bloquer la création de compte
+      }
     }
 
     setLoading(false);
@@ -92,6 +113,12 @@ export default function SignupPage() {
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {referralCode && (
+          <p className="rounded-lg bg-success-50 px-3 py-2 text-xs font-medium text-success">
+            ✓ Parrainage détecté — vous et votre parrain recevrez chacun 5 candidatures bonus.
+          </p>
+        )}
+
         <div>
           <Label htmlFor="firstName">Prénom</Label>
           <Input
