@@ -15,20 +15,35 @@ export default function AProposPage() {
 
         <div className="mt-8 space-y-5 text-sm leading-relaxed text-ink/85">
           <p>
-            [À PERSONNALISER] Bonjour, je m&apos;appelle [votre prénom]. J&apos;accompagne au quotidien des étudiants
-            dans leur recherche d&apos;alternance dans le cadre de mon activité professionnelle, et j&apos;ai créé
-            Attitude Alternance pour leur donner un outil simple qui centralise ce que je leur recommande déjà à
-            l&apos;oral : suivre chaque candidature sérieusement, relancer au bon moment, et écrire des messages qui
-            montrent une vraie compréhension du poste visé.
+            Attitude Alternance a été conçu par un professionnel de l&apos;accompagnement à la recherche
+            d&apos;alternance, qui observe chaque jour, sur le terrain, ce qui distingue réellement les candidatures
+            qui aboutissent de celles qui restent sans réponse.
           </p>
+
+          <div className="rounded-2xl border border-primary-200 bg-primary-50 p-5">
+            <p className="font-medium text-primary-600">
+              Le constat est toujours le même : ce n&apos;est pas le nombre de candidatures envoyées qui fait la
+              différence, c&apos;est la méthode derrière.
+            </p>
+          </div>
+
           <p>
-            Ce site n&apos;est pas un énième CRM générique : chaque fonctionnalité part d&apos;un vrai problème que j&apos;ai
-            observé chez les étudiants que j&apos;accompagne — des candidatures perdues dans un carnet, des relances
-            oubliées, des messages trop génériques, ou du temps perdu sur de fausses offres publiées par des écoles.
+            Un candidat qui suit rigoureusement chaque entreprise contactée, qui personnalise réellement ses
+            messages en fonction du poste et de son profil, et qui relance au bon moment — ni trop tôt, ni trop
+            tard — obtient objectivement plus d&apos;entretiens qu&apos;un candidat qui envoie beaucoup de
+            candidatures de façon désorganisée.
           </p>
+
           <p>
-            L&apos;objectif reste simple : que vous passiez moins de temps à vous organiser, et plus de temps à
-            candidater efficacement.
+            Cette rigueur méthodologique, les candidats accompagnés individuellement par un professionnel
+            l&apos;acquièrent naturellement. Attitude Alternance a été créé pour la rendre accessible à tous les
+            étudiants, avec ou sans accompagnement : un cadre structuré pour organiser sa recherche, personnaliser
+            ses candidatures, et ne plus jamais laisser une relance passer à la trappe.
+          </p>
+
+          <p>
+            L&apos;objectif reste simple : que chaque étudiant puisse candidater avec la même rigueur qu&apos;un
+            candidat accompagné professionnellement, sans que ce soit réservé à ceux qui peuvent se l&apos;offrir.
           </p>
         </div>
       </div>

@@ -69,6 +69,10 @@ export default function ConfidentialitePage() {
           </li>
           <li><strong>Resend</strong> (envoi des emails de rappel de relance, si activé)</li>
           <li><strong>Stripe</strong> (traitement des paiements de l&apos;offre Étudiant+)</li>
+          <li>
+            <strong>Vercel Analytics</strong> (statistiques de fréquentation anonymisées, sans cookie ni donnée
+            personnelle identifiable)
+          </li>
         </ul>
         <p>
           Certains de ces prestataires étant situés hors de l&apos;Union européenne (notamment aux États-Unis), les
@@ -125,8 +129,9 @@ export default function ConfidentialitePage() {
       <LegalSection title="7. Cookies">
         <p>
           Le Site utilise uniquement des cookies techniques strictement nécessaires à l&apos;authentification (gestion de
-          votre session de connexion). Aucun cookie publicitaire ou de mesure d&apos;audience tiers n&apos;est utilisé à ce
-          jour.
+          votre session de connexion). Les statistiques de fréquentation (Vercel Analytics) sont mesurées sans
+          cookie et sans identifiant personnel. Aucun cookie publicitaire ou de mesure d&apos;audience tiers
+          n&apos;est utilisé à ce jour.
         </p>
       </LegalSection>
 
