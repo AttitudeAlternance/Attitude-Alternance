@@ -86,6 +86,7 @@ export interface Profile {
   referral_code: string | null;
   referred_by: string | null;
   bonus_applications: number;
+  is_admin: boolean;
   created_at: string;
   updated_at: string;
 }

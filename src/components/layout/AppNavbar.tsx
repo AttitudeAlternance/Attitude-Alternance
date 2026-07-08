@@ -8,9 +8,10 @@ import { Sidebar } from "@/components/layout/Sidebar";
 
 interface AppNavbarProps {
   email?: string | null;
+  isAdmin?: boolean;
 }
 
-export function AppNavbar({ email }: AppNavbarProps) {
+export function AppNavbar({ email, isAdmin }: AppNavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
   const supabase = createClient();
@@ -43,7 +44,7 @@ export function AppNavbar({ email }: AppNavbarProps) {
         <div className="fixed inset-0 z-40">
           <div className="absolute inset-0 bg-ink/40" onClick={() => setMenuOpen(false)} />
           <div className="absolute inset-y-0 left-0 w-72 bg-paper shadow-pop">
-            <Sidebar onNavigate={() => setMenuOpen(false)} />
+            <Sidebar onNavigate={() => setMenuOpen(false)} isAdmin={isAdmin} />
           </div>
         </div>
       )}

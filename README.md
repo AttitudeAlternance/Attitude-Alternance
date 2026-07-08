@@ -174,6 +174,7 @@ données depuis la page "Mon profil" (droit à l'effacement RGPD).
 - **Contenu public (SEO)** : les guides longs (ex : préparation à l'entretien) sont accessibles publiquement sur `/conseils`, avec un appel à l'action vers l'inscription — indexables par les moteurs de recherche.
 - **Page "À propos"** (`/a-propos`) : signal de confiance pour les nouveaux visiteurs, à personnaliser avec votre histoire.
 - **Vercel Analytics** : intégré (composant `<Analytics />`), à activer dans Vercel (Project → Analytics → Enable) pour suivre les visites et inscriptions.
+- **Page Admin** (`/dashboard/admin`) : vue d'ensemble réservée au propriétaire du site (étudiants inscrits, nouveaux cette semaine, répartition gratuit/Étudiant+, candidatures et messages générés au total, parrainages, MRR estimé). Le paiement détaillé reste à consulter sur le Dashboard Stripe.
 
 ## Notes techniques
 

@@ -17,10 +17,12 @@ const links = [
 
 interface SidebarProps {
   onNavigate?: () => void;
+  isAdmin?: boolean;
 }
 
-export function Sidebar({ onNavigate }: SidebarProps) {
+export function Sidebar({ onNavigate, isAdmin }: SidebarProps) {
   const pathname = usePathname();
+  const allLinks = isAdmin ? [...links, { href: "/dashboard/admin", label: "Admin", icon: GaugeIcon }] : links;
 
   return (
     <div className="flex h-full flex-col gap-6 p-4">
@@ -30,7 +32,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
       </Link>
 
       <nav className="flex flex-1 flex-col gap-1">
-        {links.map(({ href, label, icon: Icon }) => {
+        {allLinks.map(({ href, label, icon: Icon }) => {
           const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
           return (
             <Link
@@ -108,6 +110,15 @@ function ShieldIcon(props: React.SVGProps<SVGSVGElement>) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
       <path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3Z" />
       <path d="M9.5 12l1.8 1.8L14.5 10" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function GaugeIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M4 15a8 8 0 1 1 16 0" />
+      <path d="M12 15l4-5" strokeLinecap="round" />
+      <path d="M4 20h16" strokeLinecap="round" />
     </svg>
   );
 }
