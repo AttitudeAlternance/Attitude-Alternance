@@ -36,15 +36,25 @@ export default async function AdminPage() {
     .neq("id", myUserId)
     .order("created_at", { ascending: false });
 
-  const { count: totalApplications } = await admin
+  const { count: totalApplications, data: applicationsByUser } = await admin
     .from("applications")
-    .select("*", { count: "exact", head: true })
+    .select("user_id", { count: "exact" })
     .neq("user_id", myUserId);
 
-  const { count: totalMessages } = await admin
+  const { count: totalMessages, data: messagesByUser } = await admin
     .from("generated_messages")
-    .select("*", { count: "exact", head: true })
+    .select("user_id", { count: "exact" })
     .neq("user_id", myUserId);
+
+  const applicationCountByUser = (applicationsByUser ?? []).reduce<Record<string, number>>((acc, a) => {
+    acc[a.user_id] = (acc[a.user_id] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const messageCountByUser = (messagesByUser ?? []).reduce<Record<string, number>>((acc, m) => {
+    acc[m.user_id] = (acc[m.user_id] ?? 0) + 1;
+    return acc;
+  }, {});
 
   const allProfiles = profiles ?? [];
   const totalUsers = allProfiles.length;
@@ -148,6 +158,8 @@ export default async function AdminPage() {
                 <th className="py-2 pr-4">Nom</th>
                 <th className="py-2 pr-4">Email</th>
                 <th className="py-2 pr-4">Plan</th>
+                <th className="py-2 pr-4">Candidatures</th>
+                <th className="py-2 pr-4">Messages</th>
                 <th className="py-2 pr-4">Inscrit le</th>
               </tr>
             </thead>
@@ -169,6 +181,8 @@ export default async function AdminPage() {
                       {p.plan === "premium" ? "Étudiant+" : "Gratuit"}
                     </span>
                   </td>
+                  <td className="py-2 pr-4 text-ink/80">{applicationCountByUser[p.id] ?? 0}</td>
+                  <td className="py-2 pr-4 text-ink/80">{messageCountByUser[p.id] ?? 0}</td>
                   <td className="py-2 pr-4 font-mono text-xs text-muted">
                     {new Date(p.created_at).toLocaleDateString("fr-FR")}
                   </td>
