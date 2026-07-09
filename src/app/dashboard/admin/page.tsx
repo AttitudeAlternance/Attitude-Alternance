@@ -29,7 +29,7 @@ export default async function AdminPage() {
   // volontairement, puisque c'est justement l'usage légitime de cette page).
   const admin = createAdminClient();
 
-  const { data: profiles } = await admin
+  const { data: profiles, error: profilesError } = await admin
     .from("profiles")
     .select("id, plan, created_at, bonus_applications, referred_by, waitlist_joined_at, age_range, target_sector, email, first_name, last_name")
     .order("created_at", { ascending: false });
@@ -85,6 +85,12 @@ export default async function AdminPage() {
           .
         </p>
       </div>
+
+      {profilesError && (
+        <p className="mb-4 rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger">
+          Erreur lors de la récupération des étudiants : {profilesError.message} (code : {profilesError.code})
+        </p>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
