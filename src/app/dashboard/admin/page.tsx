@@ -28,19 +28,23 @@ export default async function AdminPage() {
   // Vue globale multi-utilisateurs : nécessite le client admin (contourne les policies RLS,
   // volontairement, puisque c'est justement l'usage légitime de cette page).
   const admin = createAdminClient();
+  const myUserId = userData.user?.id;
 
   const { data: profiles, error: profilesError } = await admin
     .from("profiles")
     .select("id, plan, created_at, bonus_applications, referred_by, waitlist_joined_at, age_range, target_sector, email, first_name, last_name")
+    .neq("id", myUserId)
     .order("created_at", { ascending: false });
 
   const { count: totalApplications } = await admin
     .from("applications")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .neq("user_id", myUserId);
 
   const { count: totalMessages } = await admin
     .from("generated_messages")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .neq("user_id", myUserId);
 
   const allProfiles = profiles ?? [];
   const totalUsers = allProfiles.length;
@@ -74,15 +78,17 @@ export default async function AdminPage() {
       <div className="mb-6">
         <h1 className="font-display text-2xl font-bold text-ink">Admin</h1>
         <p className="mt-1 text-sm text-muted">
-          Vue d&apos;ensemble de l&apos;activité du site. Pour le détail des paiements, consultez le{" "}
+          Vue d&apos;ensemble de l&apos;activité du site (votre propre compte est exclu de toutes les statistiques
+          ci-dessous). Pour le détail des paiements, consultez le{" "}
           <a href="https://dashboard.stripe.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">
             Dashboard Stripe
           </a>{" "}
           et le{" "}
           <a href="https://vercel.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">
             Dashboard Vercel Analytics
-          </a>
-          .
+          </a>{" "}
+          (les visites de pages n&apos;étant pas suivies dans cette page, elles ne peuvent pas être filtrées ici — voir
+          directement dans Vercel).
         </p>
       </div>
 
