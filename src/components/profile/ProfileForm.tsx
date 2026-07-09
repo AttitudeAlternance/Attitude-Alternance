@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Input, Label, Textarea, FieldHint } from "@/components/ui/Form";
-import type { Profile } from "@/lib/types";
+import { Input, Label, Textarea, Select, FieldHint } from "@/components/ui/Form";
+import { AGE_RANGES, type Profile } from "@/lib/types";
 
 interface ProfileFormProps {
   userId: string;
@@ -50,6 +50,7 @@ export function ProfileForm({ userId, email, initialProfile }: ProfileFormProps)
     cv_url: initialProfile?.cv_url ?? "",
     goal: initialProfile?.goal ?? "",
   });
+  const [ageRange, setAgeRange] = useState(initialProfile?.age_range ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +73,7 @@ export function ProfileForm({ userId, email, initialProfile }: ProfileFormProps)
     setSaving(true);
     setError(null);
 
-    const { error } = await supabase.from("profiles").upsert({ id: userId, ...values });
+    const { error } = await supabase.from("profiles").upsert({ id: userId, ...values, age_range: ageRange || null });
 
     setSaving(false);
     if (error) {
@@ -111,6 +112,19 @@ export function ProfileForm({ userId, email, initialProfile }: ProfileFormProps)
               onChange={(e) => update("formation", e.target.value)}
               placeholder="Ex : BUT Marketing Digital, 2e année"
             />
+          </div>
+
+          <div>
+            <Label htmlFor="age_range">Tranche d&apos;âge</Label>
+            <Select id="age_range" value={ageRange} onChange={(e) => { setAgeRange(e.target.value); setSaved(false); }}>
+              <option value="">Je préfère ne pas répondre</option>
+              {AGE_RANGES.map((range) => (
+                <option key={range} value={range}>
+                  {range}
+                </option>
+              ))}
+            </Select>
+            <FieldHint>Utilisée uniquement pour des statistiques anonymisées et agrégées, jamais partagée individuellement.</FieldHint>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

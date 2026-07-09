@@ -34,6 +34,14 @@ export default function ConfidentialitePage() {
                 <td className="p-3">Exécution du contrat</td>
               </tr>
               <tr>
+                <td className="p-3">Tranche d&apos;âge (facultative)</td>
+                <td className="p-3">
+                  Statistiques démographiques agrégées et anonymisées uniquement (jamais de donnée individuelle
+                  partagée ou utilisée pour du ciblage publicitaire)
+                </td>
+                <td className="p-3">Consentement (champ facultatif)</td>
+              </tr>
+              <tr>
                 <td className="p-3">CV (fichier et texte extrait)</td>
                 <td className="p-3">Résumé de profil pour personnaliser les messages et calculer un score de correspondance</td>
                 <td className="p-3">Consentement (dépôt volontaire)</td>

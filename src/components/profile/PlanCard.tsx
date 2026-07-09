@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/Button";
 interface PlanCardProps {
   plan: "free" | "premium";
   justUpgraded: boolean;
+  stripeConfigured: boolean;
+  initialWaitlistJoined: boolean;
 }
 
-export function PlanCard({ plan, justUpgraded }: PlanCardProps) {
+export function PlanCard({ plan, justUpgraded, stripeConfigured, initialWaitlistJoined }: PlanCardProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [waitlistJoined, setWaitlistJoined] = useState(initialWaitlistJoined);
 
   async function handleUpgrade() {
     setLoading(true);
@@ -27,6 +30,23 @@ export function PlanCard({ plan, justUpgraded }: PlanCardProps) {
       window.location.href = data.url;
     } catch {
       setError("Une erreur est survenue.");
+      setLoading(false);
+    }
+  }
+
+  async function handleJoinWaitlist() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/join-waitlist", { method: "POST" });
+      if (!res.ok) {
+        setError("Impossible de vous inscrire pour le moment. Réessayez.");
+        return;
+      }
+      setWaitlistJoined(true);
+    } catch {
+      setError("Une erreur est survenue.");
+    } finally {
       setLoading(false);
     }
   }
@@ -48,14 +68,37 @@ export function PlanCard({ plan, justUpgraded }: PlanCardProps) {
         </p>
       )}
 
-      {plan === "free" ? (
+      {plan === "free" && stripeConfigured && (
         <>
           <Button onClick={handleUpgrade} disabled={loading}>
             {loading ? "Redirection..." : "Passer à Étudiant+"}
           </Button>
           {error && <p className="mt-2 text-sm text-danger">{error}</p>}
         </>
-      ) : (
+      )}
+
+      {plan === "free" && !stripeConfigured && (
+        <>
+          {waitlistJoined ? (
+            <p className="rounded-lg bg-success-50 px-3 py-2 text-sm font-medium text-success">
+              ✓ Vous êtes sur la liste d&apos;attente — vous serez prévenu(e) dès que Étudiant+ sera disponible au paiement.
+            </p>
+          ) : (
+            <>
+              <p className="mb-3 text-sm text-muted">
+                Le paiement Étudiant+ n&apos;est pas encore activé. Inscrivez-vous sur la liste d&apos;attente pour être
+                prévenu(e) dès son ouverture.
+              </p>
+              <Button onClick={handleJoinWaitlist} disabled={loading} variant="secondary">
+                {loading ? "Inscription..." : "Rejoindre la liste d'attente"}
+              </Button>
+              {error && <p className="mt-2 text-sm text-danger">{error}</p>}
+            </>
+          )}
+        </>
+      )}
+
+      {plan === "premium" && (
         <p className="text-sm text-muted">
           Pour gérer ou annuler votre abonnement, contactez le support ou utilisez le lien reçu par email lors de votre paiement.
         </p>

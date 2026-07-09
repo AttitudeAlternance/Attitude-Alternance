@@ -35,7 +35,12 @@ export default async function ProfilePage({
       </div>
 
       <div className="space-y-6">
-        <PlanCard plan={typedProfile?.plan ?? "free"} justUpgraded={searchParams.upgraded === "1"} />
+        <PlanCard
+          plan={typedProfile?.plan ?? "free"}
+          justUpgraded={searchParams.upgraded === "1"}
+          stripeConfigured={Boolean(process.env.STRIPE_PRICE_ID)}
+          initialWaitlistJoined={Boolean(typedProfile?.waitlist_joined_at)}
+        />
 
         <ReferralCard
           referralCode={typedProfile?.referral_code ?? null}

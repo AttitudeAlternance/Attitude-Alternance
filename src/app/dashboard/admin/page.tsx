@@ -31,7 +31,8 @@ export default async function AdminPage() {
 
   const { data: profiles } = await admin
     .from("profiles")
-    .select("id, plan, created_at, bonus_applications, referred_by");
+    .select("id, plan, created_at, bonus_applications, referred_by, waitlist_joined_at, age_range, target_sector, email, first_name, last_name")
+    .order("created_at", { ascending: false });
 
   const { count: totalApplications } = await admin
     .from("applications")
@@ -47,7 +48,14 @@ export default async function AdminPage() {
   const premiumUsers = allProfiles.filter((p) => p.plan === "premium").length;
   const freeUsers = totalUsers - premiumUsers;
   const referredUsers = allProfiles.filter((p) => p.referred_by).length;
+  const waitlistCount = allProfiles.filter((p) => p.waitlist_joined_at).length;
   const estimatedMRR = premiumUsers * 5.99;
+
+  const ageBreakdown = allProfiles.reduce<Record<string, number>>((acc, p) => {
+    const key = p.age_range || "Non renseigné";
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
 
   const stats = [
     { label: "Étudiants inscrits", value: totalUsers },
@@ -57,6 +65,7 @@ export default async function AdminPage() {
     { label: "Candidatures créées (total)", value: totalApplications ?? 0 },
     { label: "Messages générés (total)", value: totalMessages ?? 0 },
     { label: "Inscrits via parrainage", value: referredUsers },
+    { label: "Sur liste d'attente Étudiant+", value: waitlistCount },
     { label: "MRR estimé", value: `${estimatedMRR.toFixed(2)}€` },
   ];
 
@@ -90,6 +99,73 @@ export default async function AdminPage() {
         Le MRR (revenu récurrent mensuel) est une estimation basée sur {premiumUsers} abonné(s) à 5,99€ — le chiffre
         exact, avec les éventuels remboursements ou changements de tarif, reste celui affiché sur Stripe.
       </p>
+
+      <Card className="mt-6">
+        <h2 className="font-display text-base font-semibold text-ink">Répartition par tranche d&apos;âge</h2>
+        <p className="mt-1 text-xs text-muted">
+          Statistique agrégée et anonymisée (déclarative, facultative à l&apos;inscription) — utile pour un pitch
+          commercial ou une présentation de l&apos;audience, sans exposer de donnée individuelle.
+        </p>
+        <div className="mt-4 space-y-2.5">
+          {Object.entries(ageBreakdown)
+            .sort((a, b) => b[1] - a[1])
+            .map(([range, count]) => (
+              <div key={range} className="flex items-center gap-3">
+                <span className="w-32 flex-shrink-0 text-xs text-ink/80">{range}</span>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-line">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${totalUsers > 0 ? (count / totalUsers) * 100 : 0}%` }}
+                  />
+                </div>
+                <span className="w-8 flex-shrink-0 text-right text-xs font-medium text-ink">{count}</span>
+              </div>
+            ))}
+        </div>
+      </Card>
+
+      <Card className="mt-6">
+        <h2 className="font-display text-base font-semibold text-ink">Étudiants inscrits</h2>
+        <p className="mt-1 text-xs text-muted">
+          Réservé à vous seul. Utile pour recontacter un étudiant, ou vérifier une inscription via parrainage.
+        </p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[500px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-line text-xs font-medium uppercase tracking-wide text-muted">
+                <th className="py-2 pr-4">Nom</th>
+                <th className="py-2 pr-4">Email</th>
+                <th className="py-2 pr-4">Plan</th>
+                <th className="py-2 pr-4">Inscrit le</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {allProfiles.map((p) => (
+                <tr key={p.id}>
+                  <td className="py-2 pr-4 text-ink/80">
+                    {[p.first_name, p.last_name].filter(Boolean).join(" ") || "—"}
+                  </td>
+                  <td className="py-2 pr-4 text-ink/80">{p.email || "—"}</td>
+                  <td className="py-2 pr-4">
+                    <span
+                      className={
+                        p.plan === "premium"
+                          ? "rounded-full bg-success-50 px-2 py-0.5 text-xs font-medium text-success"
+                          : "rounded-full bg-paper px-2 py-0.5 text-xs font-medium text-muted"
+                      }
+                    >
+                      {p.plan === "premium" ? "Étudiant+" : "Gratuit"}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-4 font-mono text-xs text-muted">
+                    {new Date(p.created_at).toLocaleDateString("fr-FR")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
     </div>
   );
 }

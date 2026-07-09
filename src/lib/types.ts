@@ -87,9 +87,13 @@ export interface Profile {
   referred_by: string | null;
   bonus_applications: number;
   is_admin: boolean;
+  waitlist_joined_at: string | null;
+  age_range: string | null;
   created_at: string;
   updated_at: string;
 }
+
+export const AGE_RANGES = ["Moins de 18 ans", "18-20 ans", "21-23 ans", "24-26 ans", "27 ans et plus"] as const;
 
 export type MessageType = "candidature" | "relance" | "linkedin" | "remerciement";
 
