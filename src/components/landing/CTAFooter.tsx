@@ -34,6 +34,9 @@ export function Footer() {
           <Link href="/a-propos" className="hover:text-ink hover:underline">
             À propos
           </Link>
+          <Link href="/guide" className="hover:text-ink hover:underline">
+            Guide
+          </Link>
           <Link href="/conseils" className="hover:text-ink hover:underline">
             Conseils
           </Link>
