@@ -1,8 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { Footer } from "@/components/landing/CTAFooter";
 import { Button } from "@/components/ui/Button";
+import { GuideImage } from "@/components/guide/GuideImage";
 
 export const metadata = {
   title: "Guide de démarrage — Attitude Alternance",
@@ -82,15 +82,7 @@ export default function GuidePage() {
                 <p className="mt-2 text-sm text-muted">{step.text}</p>
               </div>
               <div className={step.number % 2 === 0 ? "sm:order-1" : ""}>
-                <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-                  <Image
-                    src={step.image}
-                    alt={step.alt}
-                    width={640}
-                    height={320}
-                    className="h-auto w-full"
-                  />
-                </div>
+                <GuideImage src={step.image} alt={step.alt} width={640} height={320} />
               </div>
             </div>
           ))}
