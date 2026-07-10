@@ -10,22 +10,22 @@ export default async function MessagesPage({
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userData.user?.id)
-    .maybeSingle();
-
-  const { data: history } = await supabase
-    .from("generated_messages")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(10);
-
-  const { data: applications } = await supabase
-    .from("applications")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const [{ data: profile }, { data: history }, { data: applications }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userData.user?.id)
+      .maybeSingle(),
+    supabase
+      .from("generated_messages")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("applications")
+      .select("*")
+      .order("created_at", { ascending: false }),
+  ]);
 
   return (
     <div>

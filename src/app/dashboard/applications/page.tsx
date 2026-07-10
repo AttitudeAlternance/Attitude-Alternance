@@ -10,16 +10,17 @@ export default async function ApplicationsPage() {
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
 
-  const { data: applications } = await supabase
-    .from("applications")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("plan, total_applications_created, bonus_applications")
-    .eq("id", userData.user?.id)
-    .maybeSingle();
+  const [{ data: applications }, { data: profile }] = await Promise.all([
+    supabase
+      .from("applications")
+      .select("*")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("profiles")
+      .select("plan, total_applications_created, bonus_applications")
+      .eq("id", userData.user?.id)
+      .maybeSingle(),
+  ]);
 
   return (
     <div>

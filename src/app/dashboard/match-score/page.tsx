@@ -13,16 +13,17 @@ export default async function MatchScorePage({
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("cv_summary")
-    .eq("id", userData.user?.id)
-    .maybeSingle();
-
-  const { data: applications } = await supabase
-    .from("applications")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const [{ data: profile }, { data: applications }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("cv_summary")
+      .eq("id", userData.user?.id)
+      .maybeSingle(),
+    supabase
+      .from("applications")
+      .select("*")
+      .order("created_at", { ascending: false }),
+  ]);
 
   return (
     <div>

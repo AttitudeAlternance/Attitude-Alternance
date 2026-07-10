@@ -17,16 +17,17 @@ export default async function DashboardPage() {
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("first_name, weekly_goal")
-    .eq("id", userData.user?.id)
-    .maybeSingle();
-
-  const { data: applications } = await supabase
-    .from("applications")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const [{ data: profile }, { data: applications }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("first_name, weekly_goal")
+      .eq("id", userData.user?.id)
+      .maybeSingle(),
+    supabase
+      .from("applications")
+      .select("*")
+      .order("created_at", { ascending: false }),
+  ]);
 
   const apps = (applications ?? []) as Application[];
 

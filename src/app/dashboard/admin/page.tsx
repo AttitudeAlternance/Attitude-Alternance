@@ -30,21 +30,25 @@ export default async function AdminPage() {
   const admin = createAdminClient();
   const myUserId = userData.user?.id;
 
-  const { data: profiles, error: profilesError } = await admin
-    .from("profiles")
-    .select("id, plan, created_at, bonus_applications, referred_by, waitlist_joined_at, age_range, target_sector, email, first_name, last_name")
-    .neq("id", myUserId)
-    .order("created_at", { ascending: false });
-
-  const { count: totalApplications, data: applicationsByUser } = await admin
-    .from("applications")
-    .select("user_id", { count: "exact" })
-    .neq("user_id", myUserId);
-
-  const { count: totalMessages, data: messagesByUser } = await admin
-    .from("generated_messages")
-    .select("user_id", { count: "exact" })
-    .neq("user_id", myUserId);
+  const [
+    { data: profiles, error: profilesError },
+    { count: totalApplications, data: applicationsByUser },
+    { count: totalMessages, data: messagesByUser },
+  ] = await Promise.all([
+    admin
+      .from("profiles")
+      .select("id, plan, created_at, bonus_applications, referred_by, waitlist_joined_at, age_range, target_sector, email, first_name, last_name")
+      .neq("id", myUserId)
+      .order("created_at", { ascending: false }),
+    admin
+      .from("applications")
+      .select("user_id", { count: "exact" })
+      .neq("user_id", myUserId),
+    admin
+      .from("generated_messages")
+      .select("user_id", { count: "exact" })
+      .neq("user_id", myUserId),
+  ]);
 
   const applicationCountByUser = (applicationsByUser ?? []).reduce<Record<string, number>>((acc, a) => {
     acc[a.user_id] = (acc[a.user_id] ?? 0) + 1;

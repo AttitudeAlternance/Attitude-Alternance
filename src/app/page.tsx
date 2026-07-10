@@ -1,5 +1,6 @@
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { Hero } from "@/components/landing/Hero";
+import { DemoVideo } from "@/components/landing/DemoVideo";
 import { ProblemSolution } from "@/components/landing/ProblemSolution";
 import { Benefits } from "@/components/landing/Benefits";
 import { HowItWorks } from "@/components/landing/HowItWorks";
@@ -12,6 +13,7 @@ export default function HomePage() {
     <main className="min-h-screen bg-paper">
       <PublicNavbar />
       <Hero />
+      <DemoVideo />
       <ProblemSolution />
       <Benefits />
       <HowItWorks />
