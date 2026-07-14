@@ -17,13 +17,13 @@ export function PublicNavbar() {
           <Link href="/conseils" className="text-sm text-muted hover:text-ink transition-colors">
             Conseils
           </Link>
-          <a href="#fonctionnement" className="text-sm text-muted hover:text-ink transition-colors">
+          <a href="/#fonctionnement" className="text-sm text-muted hover:text-ink transition-colors">
             Fonctionnement
           </a>
-          <a href="#tarifs" className="text-sm text-muted hover:text-ink transition-colors">
+          <a href="/#tarifs" className="text-sm text-muted hover:text-ink transition-colors">
             Tarifs
           </a>
-          <a href="#faq" className="text-sm text-muted hover:text-ink transition-colors">
+          <a href="/#faq" className="text-sm text-muted hover:text-ink transition-colors">
             FAQ
           </a>
         </nav>

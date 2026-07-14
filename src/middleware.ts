@@ -8,8 +8,11 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Applique le middleware à toutes les routes sauf les fichiers statiques.
+     * Applique le middleware uniquement aux pages de l'espace connecté.
+     * Les pages publiques (landing, guide, conseils...) n'ont pas besoin de
+     * vérifier la session à chaque requête, ce qui évite un aller-retour
+     * réseau inutile vers Supabase et accélère leur affichage.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/dashboard/:path*",
   ],
 };

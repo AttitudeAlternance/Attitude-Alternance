@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card } from "@/components/ui/Card";
+import { AdminPlanToggle } from "@/components/admin/AdminPlanToggle";
 import { isThisWeek } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -165,6 +166,7 @@ export default async function AdminPage() {
                 <th className="py-2 pr-4">Candidatures</th>
                 <th className="py-2 pr-4">Messages</th>
                 <th className="py-2 pr-4">Inscrit le</th>
+                <th className="py-2 pr-4">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -189,6 +191,9 @@ export default async function AdminPage() {
                   <td className="py-2 pr-4 text-ink/80">{messageCountByUser[p.id] ?? 0}</td>
                   <td className="py-2 pr-4 font-mono text-xs text-muted">
                     {new Date(p.created_at).toLocaleDateString("fr-FR")}
+                  </td>
+                  <td className="py-2 pr-4">
+                    <AdminPlanToggle userId={p.id} currentPlan={p.plan as "free" | "premium"} />
                   </td>
                 </tr>
               ))}
