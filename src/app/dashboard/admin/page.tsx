@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card } from "@/components/ui/Card";
 import { AdminPlanToggle } from "@/components/admin/AdminPlanToggle";
+import { AdminDeleteUserButton } from "@/components/admin/AdminDeleteUserButton";
 import { isThisWeek } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -193,7 +194,13 @@ export default async function AdminPage() {
                     {new Date(p.created_at).toLocaleDateString("fr-FR")}
                   </td>
                   <td className="py-2 pr-4">
-                    <AdminPlanToggle userId={p.id} currentPlan={p.plan as "free" | "premium"} />
+                    <div className="flex items-center gap-1.5">
+                      <AdminPlanToggle userId={p.id} currentPlan={p.plan as "free" | "premium"} />
+                      <AdminDeleteUserButton
+                        userId={p.id}
+                        label={[p.first_name, p.last_name].filter(Boolean).join(" ") || p.email || "cet étudiant"}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
