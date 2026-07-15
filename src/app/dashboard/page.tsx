@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/Badge";
 import { WeeklyGoalCard } from "@/components/dashboard/WeeklyGoalCard";
+import { StartupChecklist } from "@/components/dashboard/StartupChecklist";
 import { formatDate, isOverdue, isDueToday, isThisWeek } from "@/lib/utils";
 import type { Application } from "@/lib/types";
 
@@ -17,16 +18,19 @@ export default async function DashboardPage() {
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
 
-  const [{ data: profile }, { data: applications }] = await Promise.all([
+  const [{ data: profile }, { data: applications }, { count: messageCount }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("first_name, weekly_goal")
+      .select("first_name, weekly_goal, cv_summary")
       .eq("id", userData.user?.id)
       .maybeSingle(),
     supabase
       .from("applications")
       .select("*")
       .order("created_at", { ascending: false }),
+    supabase
+      .from("generated_messages")
+      .select("*", { count: "exact", head: true }),
   ]);
 
   const apps = (applications ?? []) as Application[];
@@ -58,6 +62,12 @@ export default async function DashboardPage() {
           Voici où en est votre recherche d&apos;alternance aujourd&apos;hui.
         </p>
       </div>
+
+      <StartupChecklist
+        hasCv={Boolean(profile?.cv_summary)}
+        hasApplication={apps.length > 0}
+        hasMessage={(messageCount ?? 0) > 0}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (

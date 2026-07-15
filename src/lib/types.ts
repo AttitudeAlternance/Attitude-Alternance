@@ -89,6 +89,7 @@ export interface Profile {
   is_admin: boolean;
   waitlist_joined_at: string | null;
   age_range: string | null;
+  activation_reminder_sent_at: string | null;
   created_at: string;
   updated_at: string;
 }

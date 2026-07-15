@@ -173,7 +173,8 @@ données depuis la page "Mon profil" (droit à l'effacement RGPD).
 - **Programme de parrainage** : chaque étudiant a un lien de parrainage personnel ; un nouvel inscrit via ce lien débloque 5 candidatures bonus pour lui et son parrain.
 - **Contenu public (SEO)** : les guides longs (ex : préparation à l'entretien) sont accessibles publiquement sur `/conseils`, avec un appel à l'action vers l'inscription — indexables par les moteurs de recherche.
 - **Page "À propos"** (`/a-propos`) : signal de confiance pour les nouveaux visiteurs, à personnaliser avec votre histoire.
-- **Vercel Analytics** : intégré (composant `<Analytics />`), à activer dans Vercel (Project → Analytics → Enable) pour suivre les visites et inscriptions.
+- **Checklist de démarrage** : affichée sur le tableau de bord tant que les 3 étapes clés ne sont pas complétées (CV déposé, première candidature ajoutée, premier message généré). Disparaît automatiquement une fois terminée.
+- **Relance d'activation par email** : les comptes inscrits depuis au moins 2 jours sans aucune candidature reçoivent un email les invitant à ajouter leur première candidature — envoyé une seule fois par compte (déclenché par la même tâche planifiée quotidienne que les rappels de relance).
 - **Page Admin** (`/dashboard/admin`) : vue d'ensemble réservée au propriétaire du site (étudiants inscrits, nouveaux cette semaine, répartition gratuit/Étudiant+, candidatures et messages générés au total, parrainages, MRR estimé). Le paiement détaillé reste à consulter sur le Dashboard Stripe.
 
 ## Notes techniques
