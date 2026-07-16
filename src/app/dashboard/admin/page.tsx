@@ -69,6 +69,11 @@ export default async function AdminPage() {
   const freeUsers = totalUsers - premiumUsers;
   const referredUsers = allProfiles.filter((p) => p.referred_by).length;
   const waitlistCount = allProfiles.filter((p) => p.waitlist_joined_at).length;
+  const waitlistProfiles = allProfiles
+    .filter((p) => p.waitlist_joined_at)
+    .sort(
+      (a, b) => new Date(a.waitlist_joined_at as string).getTime() - new Date(b.waitlist_joined_at as string).getTime()
+    );
   const estimatedMRR = premiumUsers * 5.99;
 
   const ageBreakdown = allProfiles.reduce<Record<string, number>>((acc, p) => {
@@ -150,6 +155,48 @@ export default async function AdminPage() {
               </div>
             ))}
         </div>
+      </Card>
+
+      <Card className="mt-6">
+        <h2 className="font-display text-base font-semibold text-ink">Liste d&apos;attente Étudiant+</h2>
+        <p className="mt-1 text-xs text-muted">
+          Étudiants inscrits sur la liste d&apos;attente (paiement pas encore configuré ou en attente), classés par
+          ordre d&apos;inscription. Vous pouvez les passer directement en Étudiant+ depuis cette liste.
+        </p>
+        {waitlistProfiles.length === 0 ? (
+          <p className="mt-4 text-sm text-muted">Personne sur la liste d&apos;attente pour le moment.</p>
+        ) : (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[500px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-line text-xs font-medium uppercase tracking-wide text-muted">
+                  <th className="py-2 pr-4">#</th>
+                  <th className="py-2 pr-4">Nom</th>
+                  <th className="py-2 pr-4">Email</th>
+                  <th className="py-2 pr-4">Inscrit sur liste le</th>
+                  <th className="py-2 pr-4">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {waitlistProfiles.map((p, i) => (
+                  <tr key={p.id}>
+                    <td className="py-2 pr-4 text-ink/80">{i + 1}</td>
+                    <td className="py-2 pr-4 text-ink/80">
+                      {[p.first_name, p.last_name].filter(Boolean).join(" ") || "—"}
+                    </td>
+                    <td className="py-2 pr-4 text-ink/80">{p.email || "—"}</td>
+                    <td className="py-2 pr-4 font-mono text-xs text-muted">
+                      {new Date(p.waitlist_joined_at as string).toLocaleDateString("fr-FR")}
+                    </td>
+                    <td className="py-2 pr-4">
+                      <AdminPlanToggle userId={p.id} currentPlan={p.plan as "free" | "premium"} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
 
       <Card className="mt-6">
