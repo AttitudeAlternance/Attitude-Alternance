@@ -11,18 +11,18 @@ interface StartupChecklistProps {
 export function StartupChecklist({ hasCv, hasApplication, hasMessage }: StartupChecklistProps) {
   const steps = [
     {
-      done: hasCv,
-      label: "Déposez votre CV",
-      description: "Il sera lu pour personnaliser vos messages et votre score de correspondance.",
-      href: "/dashboard/profile",
-      cta: "Déposer mon CV",
-    },
-    {
       done: hasApplication,
       label: "Ajoutez votre première candidature",
       description: "Entreprise, poste, statut — ça prend trente secondes.",
       href: "/dashboard/applications",
       cta: "Ajouter une candidature",
+    },
+    {
+      done: hasCv,
+      label: "Déposez votre CV",
+      description: "Pour affiner vos messages et votre score de correspondance.",
+      href: "/dashboard/profile",
+      cta: "Déposer mon CV",
     },
     {
       done: hasMessage,

@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card } from "@/components/ui/Card";
 import { AdminPlanToggle } from "@/components/admin/AdminPlanToggle";
-import { AdminDeleteUserButton } from "@/components/admin/AdminDeleteUserButton";
+import { AdminStudentsPanel } from "@/components/admin/AdminStudentsPanel";
 import { isThisWeek } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -75,6 +75,16 @@ export default async function AdminPage() {
       (a, b) => new Date(a.waitlist_joined_at as string).getTime() - new Date(b.waitlist_joined_at as string).getTime()
     );
   const estimatedMRR = premiumUsers * 5.99;
+
+  const studentRows = allProfiles.map((p) => ({
+    id: p.id,
+    name: [p.first_name, p.last_name].filter(Boolean).join(" ") || null,
+    email: p.email as string | null,
+    plan: (p.plan as "free" | "premium") ?? "free",
+    applications: applicationCountByUser[p.id] ?? 0,
+    messages: messageCountByUser[p.id] ?? 0,
+    createdAt: p.created_at as string,
+  }));
 
   const ageBreakdown = allProfiles.reduce<Record<string, number>>((acc, p) => {
     const key = p.age_range || "Non renseigné";
@@ -199,62 +209,7 @@ export default async function AdminPage() {
         )}
       </Card>
 
-      <Card className="mt-6">
-        <h2 className="font-display text-base font-semibold text-ink">Étudiants inscrits</h2>
-        <p className="mt-1 text-xs text-muted">
-          Réservé à vous seul. Utile pour recontacter un étudiant, ou vérifier une inscription via parrainage.
-        </p>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[500px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-line text-xs font-medium uppercase tracking-wide text-muted">
-                <th className="py-2 pr-4">Nom</th>
-                <th className="py-2 pr-4">Email</th>
-                <th className="py-2 pr-4">Plan</th>
-                <th className="py-2 pr-4">Candidatures</th>
-                <th className="py-2 pr-4">Messages</th>
-                <th className="py-2 pr-4">Inscrit le</th>
-                <th className="py-2 pr-4">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {allProfiles.map((p) => (
-                <tr key={p.id}>
-                  <td className="py-2 pr-4 text-ink/80">
-                    {[p.first_name, p.last_name].filter(Boolean).join(" ") || "—"}
-                  </td>
-                  <td className="py-2 pr-4 text-ink/80">{p.email || "—"}</td>
-                  <td className="py-2 pr-4">
-                    <span
-                      className={
-                        p.plan === "premium"
-                          ? "rounded-full bg-success-50 px-2 py-0.5 text-xs font-medium text-success"
-                          : "rounded-full bg-paper px-2 py-0.5 text-xs font-medium text-muted"
-                      }
-                    >
-                      {p.plan === "premium" ? "Étudiant+" : "Gratuit"}
-                    </span>
-                  </td>
-                  <td className="py-2 pr-4 text-ink/80">{applicationCountByUser[p.id] ?? 0}</td>
-                  <td className="py-2 pr-4 text-ink/80">{messageCountByUser[p.id] ?? 0}</td>
-                  <td className="py-2 pr-4 font-mono text-xs text-muted">
-                    {new Date(p.created_at).toLocaleDateString("fr-FR")}
-                  </td>
-                  <td className="py-2 pr-4">
-                    <div className="flex items-center gap-1.5">
-                      <AdminPlanToggle userId={p.id} currentPlan={p.plan as "free" | "premium"} />
-                      <AdminDeleteUserButton
-                        userId={p.id}
-                        label={[p.first_name, p.last_name].filter(Boolean).join(" ") || p.email || "cet étudiant"}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      <AdminStudentsPanel students={studentRows} />
     </div>
   );
 }
