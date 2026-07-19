@@ -4,17 +4,27 @@ export const metadata = { title: "Mentions légales — Attitude Alternance" };
 
 export default function MentionsLegalesPage() {
   return (
-    <LegalLayout title="Mentions légales" updatedAt="3 juillet 2026">
+    <LegalLayout title="Mentions légales" updatedAt="19 juillet 2026">
       <LegalSection title="Éditeur du site">
         <p>
           Le site Attitude Alternance (ci-après « le Site ») est édité par :
         </p>
-        <p className="rounded-lg bg-warn-50 p-4 text-warn">
-          [À COMPLÉTER] — Nom et prénom (ou dénomination sociale si vous exercez en société), statut (particulier,
-          auto-entrepreneur, société...), adresse postale, numéro de SIRET le cas échéant, adresse email de contact,
-          numéro de téléphone (facultatif pour un particulier).
+        <p className="rounded-lg border border-line bg-paper p-4">
+          <strong>Baptiste GAUVIN</strong>, exerçant sous le nom commercial <strong>Attitude Alternance</strong>
+          <br />
+          Entrepreneur individuel (micro-entreprise)
+          <br />
+          Adresse : 26 Sentier Canis, 33300 Bordeaux, France
+          <br />
+          SIRET : 107 332 587 00016
+          <br />
+          TVA non applicable, article 293 B du Code général des impôts
+          <br />
+          Email : baptistegauvinn@gmail.com
+          <br />
+          Téléphone : 06 28 68 88 26
         </p>
-        <p>Directeur de la publication : [À COMPLÉTER — nom de la personne responsable de la publication].</p>
+        <p>Directeur de la publication : Baptiste Gauvin.</p>
       </LegalSection>
 
       <LegalSection title="Hébergement">
@@ -37,7 +47,7 @@ export default function MentionsLegalesPage() {
       </LegalSection>
 
       <LegalSection title="Contact">
-        <p>Pour toute question relative au Site, vous pouvez écrire à : [À COMPLÉTER — adresse email de contact].</p>
+        <p>Pour toute question relative au Site, vous pouvez écrire à : baptistegauvinn@gmail.com.</p>
       </LegalSection>
     </LegalLayout>
   );
