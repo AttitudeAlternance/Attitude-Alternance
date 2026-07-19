@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -14,7 +14,23 @@ interface AppNavbarProps {
 export function AppNavbar({ email, isAdmin }: AppNavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
+
+  // Filet de sécurité : quel que soit le chemin emprunté pour naviguer (lien du menu,
+  // bouton précédent/suivant du téléphone, etc.), le menu mobile se referme dès que
+  // l'URL change. Ça évite qu'il reste affiché par-dessus la nouvelle page.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  // Empêche la page de défiler derrière le menu quand celui-ci est ouvert sur mobile.
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -41,9 +57,18 @@ export function AppNavbar({ email, isAdmin }: AppNavbarProps) {
       </Button>
 
       {menuOpen && (
-        <div className="fixed inset-0 z-40">
+        <div className="fixed inset-0 z-40" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-ink/40" onClick={() => setMenuOpen(false)} />
-          <div className="absolute inset-y-0 left-0 w-72 bg-paper shadow-pop">
+          <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-paper shadow-pop">
+            <button
+              aria-label="Fermer le menu"
+              onClick={() => setMenuOpen(false)}
+              className="absolute right-3 top-3 rounded-lg p-2 text-ink/60 hover:bg-black/5 hover:text-ink"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+              </svg>
+            </button>
             <Sidebar onNavigate={() => setMenuOpen(false)} isAdmin={isAdmin} />
           </div>
         </div>
