@@ -8,21 +8,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_admin")
+    .select("is_admin, plan")
     .eq("id", data.user?.id)
     .maybeSingle();
+
+  const plan = (profile?.plan as "free" | "premium") ?? "free";
 
   return (
     <div className="min-h-screen bg-paper lg:flex">
       {/* Sidebar fixe sur desktop */}
       <aside className="hidden w-64 flex-shrink-0 border-r border-line bg-white lg:block">
         <div className="sticky top-0 h-screen">
-          <Sidebar isAdmin={profile?.is_admin ?? false} />
+          <Sidebar isAdmin={profile?.is_admin ?? false} plan={plan} />
         </div>
       </aside>
 
       <div className="flex-1">
-        <AppNavbar email={data.user?.email} isAdmin={profile?.is_admin ?? false} />
+        <AppNavbar email={data.user?.email} isAdmin={profile?.is_admin ?? false} plan={plan} />
         <DesktopTopbar email={data.user?.email} />
         <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
       </div>

@@ -9,9 +9,10 @@ import { Sidebar } from "@/components/layout/Sidebar";
 interface AppNavbarProps {
   email?: string | null;
   isAdmin?: boolean;
+  plan?: "free" | "premium";
 }
 
-export function AppNavbar({ email, isAdmin }: AppNavbarProps) {
+export function AppNavbar({ email, isAdmin, plan }: AppNavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -69,7 +70,7 @@ export function AppNavbar({ email, isAdmin }: AppNavbarProps) {
                 <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
               </svg>
             </button>
-            <Sidebar onNavigate={() => setMenuOpen(false)} isAdmin={isAdmin} />
+            <Sidebar onNavigate={() => setMenuOpen(false)} isAdmin={isAdmin} plan={plan} />
           </div>
         </div>
       )}

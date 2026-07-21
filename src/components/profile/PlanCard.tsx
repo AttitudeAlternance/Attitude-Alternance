@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
@@ -15,6 +15,21 @@ export function PlanCard({ plan, justUpgraded, stripeConfigured, initialWaitlist
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [waitlistJoined, setWaitlistJoined] = useState(initialWaitlistJoined);
+
+  // Quand on clique sur "Passer à Étudiant+", la page redirige vers Stripe puis le
+  // navigateur peut restaurer cette page depuis son cache (bouton "précédent" après
+  // annulation du paiement) sans la recharger. Le state "loading" restait alors bloqué
+  // à true pour toujours, gardant le bouton coincé sur "Redirection...". On le
+  // réinitialise explicitement dès que la page redevient visible dans ce cas.
+  useEffect(() => {
+    function handlePageShow(event: PageTransitionEvent) {
+      if (event.persisted) {
+        setLoading(false);
+      }
+    }
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   async function handleUpgrade() {
     setLoading(true);

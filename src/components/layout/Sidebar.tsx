@@ -18,9 +18,10 @@ const links = [
 interface SidebarProps {
   onNavigate?: () => void;
   isAdmin?: boolean;
+  plan?: "free" | "premium";
 }
 
-export function Sidebar({ onNavigate, isAdmin }: SidebarProps) {
+export function Sidebar({ onNavigate, isAdmin, plan = "free" }: SidebarProps) {
   const pathname = usePathname();
   const allLinks = isAdmin ? [...links, { href: "/dashboard/admin", label: "Admin", icon: GaugeIcon }] : links;
 
@@ -52,6 +53,17 @@ export function Sidebar({ onNavigate, isAdmin }: SidebarProps) {
           );
         })}
       </nav>
+
+      {plan === "free" && (
+        <Link
+          href="/dashboard/profile"
+          onClick={onNavigate}
+          className="block rounded-xl bg-primary p-4 text-white shadow-pop transition-transform hover:scale-[1.02]"
+        >
+          <p className="text-sm font-semibold">✨ Passer à Étudiant+</p>
+          <p className="mt-1 text-xs text-white/80">Candidatures illimitées et IA sans limite — 5,99€/mois</p>
+        </Link>
+      )}
 
       <div className="rounded-xl bg-primary-50 p-4">
         <p className="text-xs font-semibold text-primary-600">Objectif du jour</p>
