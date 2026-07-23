@@ -164,7 +164,17 @@ export function ApplicationsBoard({
           </div>
         </div>
 
-        <Button onClick={openCreateModal}>+ Ajouter une candidature</Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {plan === "free" && (
+            <Link
+              href="/dashboard/profile"
+              className="flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-600 transition-colors hover:bg-primary-100"
+            >
+              ✨ Étudiant+ : candidatures illimitées
+            </Link>
+          )}
+          <Button onClick={openCreateModal}>+ Ajouter une candidature</Button>
+        </div>
       </div>
 
       {plan === "free" && totalCreated >= Math.round(effectiveLimit * 0.8) && (
