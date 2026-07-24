@@ -14,6 +14,24 @@ const guides = [
     description: "La méthode complète pour arriver confiant : fiche de poste, présentation, questions fréquentes, et le conseil du coach.",
     icon: "🎤",
   },
+  {
+    slug: "cv-alternance",
+    title: "Rédiger son CV pour une alternance",
+    description: "La structure qui fonctionne, comment valoriser ses expériences même sans expérience pro, et les erreurs à éviter.",
+    icon: "📄",
+  },
+  {
+    slug: "relancer-candidature-alternance",
+    title: "Relancer une entreprise après une candidature",
+    description: "Quand relancer, quel canal utiliser, ce qu'un bon message de relance doit contenir — et combien de fois le faire.",
+    icon: "📬",
+  },
+  {
+    slug: "reperer-fausse-offre-alternance",
+    title: "Repérer une fausse offre d'alternance",
+    description: "Les signaux d'alerte d'une annonce publiée pour capter des candidats, et comment vérifier une offre avant de postuler.",
+    icon: "🔍",
+  },
 ];
 
 export default function ConseilsIndexPage() {
