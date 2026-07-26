@@ -23,7 +23,9 @@ export async function GET(request: Request) {
   const today = new Date().toISOString().slice(0, 10);
 
   // Toutes les candidatures dont la relance est due aujourd'hui ou en retard,
-  // et qui ne sont pas déjà closes (acceptée ou refusée).
+  // et qui ne sont pas déjà closes (acceptée ou refusée). Les candidatures encore
+  // "à candidater" restent volontairement incluses : si l'étudiant a oublié de
+  // postuler, le rappel lui sert justement de piqûre de rappel pour le faire.
   const { data: applications, error } = await supabase
     .from("applications")
     .select("*")
@@ -59,20 +61,38 @@ export async function GET(request: Request) {
 
     if (!profile?.email) continue;
 
-    const itemsHtml = userApps
-      .map((a) => `<li><strong>${escapeHtml(a.company)}</strong> — ${escapeHtml(a.role)}</li>`)
-      .join("");
+    const toSend = userApps.filter((a) => a.status === "a_candidater");
+    const toFollowUp = userApps.filter((a) => a.status !== "a_candidater");
+
+    const listItem = (a: Application) => `<li><strong>${escapeHtml(a.company)}</strong> — ${escapeHtml(a.role)}</li>`;
+
+    const toSendBlock =
+      toSend.length > 0
+        ? `<p>À envoyer aujourd'hui (repérée mais pas encore postulée) :</p><ul>${toSend
+            .map(listItem)
+            .join("")}</ul>`
+        : "";
+
+    const toFollowUpBlock =
+      toFollowUp.length > 0
+        ? `<p>À relancer aujourd'hui ou en retard :</p><ul>${toFollowUp.map(listItem).join("")}</ul>`
+        : "";
 
     const html = `
       <p>Bonjour ${escapeHtml(profile.first_name || "")},</p>
-      <p>Vous avez ${userApps.length} candidature(s) à relancer aujourd'hui ou en retard sur Attitude Alternance :</p>
-      <ul>${itemsHtml}</ul>
-      <p>Connectez-vous à votre espace pour générer un message de relance en un clic.</p>
+      <p>Un point sur vos candidatures sur Attitude Alternance :</p>
+      ${toSendBlock}
+      ${toFollowUpBlock}
+      <p>Connectez-vous à votre espace pour générer un message en un clic.</p>
     `;
+
+    const subjectParts = [];
+    if (toFollowUp.length > 0) subjectParts.push(`${toFollowUp.length} relance(s)`);
+    if (toSend.length > 0) subjectParts.push(`${toSend.length} candidature(s) à envoyer`);
 
     const sent = await sendEmail({
       to: profile.email,
-      subject: `${userApps.length} relance(s) à faire aujourd'hui — Attitude Alternance`,
+      subject: `${subjectParts.join(" et ")} aujourd'hui — Attitude Alternance`,
       html,
     });
 
