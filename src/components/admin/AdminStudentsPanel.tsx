@@ -37,6 +37,36 @@ const TEMPLATES: EmailTemplate[] = [
     message:
       "Bonjour {prenom},\n\nQuelques fonctionnalités utiles si vous ne les avez pas encore essayées :\n\n- Le générateur de messages IA : un message de candidature personnalisé en quelques secondes, à partir de votre CV et de l'offre.\n\n- Le score de correspondance : collez une offre pour voir en un coup d'œil si votre profil correspond au poste.\n\n- La vérification d'offre : pour repérer les annonces publiées par des écoles plutôt que par de vraies entreprises.\n\nÀ retrouver dans le menu de votre tableau de bord.\n\nL'équipe Attitude Alternance",
   },
+  {
+    label: "Lundi #1 — Cibler ses secteurs connus",
+    subject: "Le secteur que vous connaissez déjà est votre meilleur raccourci",
+    message:
+      "Bonjour {prenom},\n\nLe conseil du lundi cette semaine : commencez votre recherche par les secteurs que vous connaissez déjà, même à travers une expérience courte.\n\nSi vous avez fait un stage, un job d'été ou un job étudiant dans un secteur précis (matériaux, restauration, retail, industrie...), vous avez déjà un vocabulaire et une compréhension produit que la majorité des candidats n'ont pas. Un recruteur qui voit ça sur un CV est rassuré : moins de formation nécessaire, moins de risque perçu.\n\nListez toutes vos expériences passées, même courtes, notez le secteur de chacune, et ciblez en priorité les entreprises de ces mêmes secteurs avant d'élargir.\n\nBonne recherche,\nL'équipe Attitude Alternance",
+  },
+  {
+    label: "Lundi #2 — Sites moins fréquentés",
+    subject: "Le site sur lequel tout le monde ne postule pas",
+    message:
+      "Bonjour {prenom},\n\nLe conseil du lundi cette semaine : sortez des plateformes que tout le monde utilise.\n\nLinkedIn et Indeed sont saturés — parfois des centaines de candidatures par offre. France Travail (l'ex-Pôle emploi) et La Bonne Alternance sont beaucoup moins fréquentés par les étudiants, alors qu'ils référencent souvent les mêmes offres. Moins de concurrence, plus de visibilité pour votre candidature.\n\nCe lundi, prenez 15 minutes pour créer votre profil sur France Travail si ce n'est pas déjà fait, et faites une recherche sur votre métier ciblé.\n\nBonne recherche,\nL'équipe Attitude Alternance",
+  },
+  {
+    label: "Lundi #3 — Le bon moment pour relancer",
+    subject: "Le bon moment pour relancer (ce n'est pas trop tôt)",
+    message:
+      "Bonjour {prenom},\n\nLe conseil du lundi cette semaine : si vous avez postulé la semaine dernière sans réponse, c'est le bon moment pour relancer.\n\nLe timing optimal se situe entre 7 et 10 jours après l'envoi. À ce moment-là, le pic de candidatures reçues juste après la publication de l'offre est retombé — votre message a beaucoup plus de chances d'être réellement lu plutôt que noyé dans un afflux.\n\nUn message court suffit : rappelez le poste visé, réaffirmez votre motivation en une phrase, restez poli et sans pression.\n\nBonne recherche,\nL'équipe Attitude Alternance",
+  },
+  {
+    label: "Lundi #4 — Candidatures spontanées",
+    subject: "Les candidatures spontanées, oui — mais sans y perdre votre semaine",
+    message:
+      "Bonjour {prenom},\n\nLe conseil du lundi cette semaine : les candidatures spontanées valent le coup, mais ne doivent pas devenir chronophages.\n\nElles montrent une vraie démarche volontaire et touchent des entreprises qui n'ont peut-être même pas encore publié leur besoin. Mais les rédiger une par une prend du temps — un temps que vous pouvez optimiser avec des outils dédiés (comme sponta.io) qui automatisent une partie de l'envoi.\n\nL'idée : gardez un vrai temps de qualité pour vos candidatures ciblées prioritaires, et laissez les outils vous faire gagner du temps sur le volume.\n\nBonne recherche,\nL'équipe Attitude Alternance",
+  },
+  {
+    label: "Lundi #5 — Le site carrière de l'entreprise",
+    subject: "Un réflexe simple que peu d'étudiants ont",
+    message:
+      "Bonjour {prenom},\n\nLe conseil du lundi cette semaine : quand une entreprise vous intéresse, allez directement sur son site et cherchez sa rubrique « Carrières » ou « Nous rejoindre ».\n\nBeaucoup d'étudiants postulent uniquement via les plateformes d'offres, en oubliant que de nombreuses entreprises traitent en priorité les candidatures reçues directement sur leur propre site. Ça prend 5 minutes de plus, mais ça peut vous placer devant des candidats qui n'ont postulé que via LinkedIn ou Indeed.\n\nUn bon réflexe : pour chaque entreprise ciblée, vérifiez systématiquement si elle a une page carrière avant de chercher ses offres ailleurs.\n\nBonne recherche,\nL'équipe Attitude Alternance",
+  },
 ];
 
 export function AdminStudentsPanel({ students }: { students: StudentRow[] }) {
@@ -181,10 +211,10 @@ export function AdminStudentsPanel({ students }: { students: StudentRow[] }) {
           remplacé automatiquement par le prénom de chaque destinataire.
         </p>
 
-        <div className="mt-3 rounded-lg bg-warn-50 px-3 py-2 text-xs text-ink/80">
-          ⚠️ Tant que le nom de domaine n&apos;est pas vérifié sur Resend, les emails ne peuvent être livrés qu&apos;à
-          votre propre adresse (limite du mode sandbox) — aucun étudiant ne recevra réellement cet email avant cette
-          étape. Le module est prêt et fonctionnera pleinement dès la vérification du domaine.
+        <div className="mt-3 rounded-lg bg-primary-50 px-3 py-2 text-xs text-ink/80">
+          💡 Domaine vérifié sur Resend — les emails partent réellement. Pour un premier envoi à un grand groupe,
+          mieux vaut y aller progressivement (quelques étudiants à la fois) le temps que la réputation du domaine
+          s&apos;établisse auprès des boîtes mail.
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">

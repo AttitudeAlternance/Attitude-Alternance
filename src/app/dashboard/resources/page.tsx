@@ -63,6 +63,17 @@ const resources: ResourceCategory[] = [
     ],
   },
   {
+    category: "Où et comment postuler",
+    icon: "🧭",
+    items: [
+      "Ciblez en priorité les secteurs que vous connaissez déjà (stage, job d'été...) : le recruteur est rassuré sur votre compréhension du métier.",
+      "Sortez de LinkedIn et Indeed, saturés : France Travail et La Bonne Alternance sont bien moins fréquentés par les étudiants, pour les mêmes offres.",
+      "Relancez entre 7 et 10 jours après l'envoi : le pic de candidatures reçues juste après la publication est retombé, votre message est plus visible.",
+      "Les candidatures spontanées valent le coup, mais sans y passer trop de temps : des outils comme sponta.io peuvent accélérer l'envoi du volume.",
+      "Pensez à postuler directement sur la page « Carrières » du site de l'entreprise, en plus des plateformes d'offres — beaucoup les traitent en priorité.",
+    ],
+  },
+  {
     category: "Exemples de messages",
     icon: "✉️",
     items: [
