@@ -79,3 +79,103 @@ export function isThisWeek(value: string | null | undefined): boolean {
 
   return date.getTime() >= startOfWeek.getTime() && date.getTime() < endOfWeek.getTime();
 }
+
+function dayKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+export interface StreakDay {
+  label: string;
+  active: boolean;
+  isToday: boolean;
+  isFuture: boolean;
+}
+
+export interface StreakInfo {
+  current: number;
+  longest: number;
+  weekDays: StreakDay[];
+}
+
+// Calcule la régularité de l'étudiant : un jour est "validé" dès qu'au moins une
+// candidature a été ajoutée ce jour-là. Le streak actuel compte les jours consécutifs
+// jusqu'à aujourd'hui — avec une "grâce" jusqu'à la fin de la journée : si rien n'a
+// encore été ajouté aujourd'hui mais que hier était actif, le streak reste affiché
+// intact (il ne se casse qu'au lendemain si toujours rien n'a été fait).
+export function computeStreak(activityDates: (string | null | undefined)[]): StreakInfo {
+  const activeDays = new Set<string>();
+  for (const value of activityDates) {
+    if (!value) continue;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) continue;
+    activeDays.add(dayKey(date));
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let current = 0;
+  const cursor = new Date(today);
+  if (!activeDays.has(dayKey(cursor))) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  while (activeDays.has(dayKey(cursor))) {
+    current += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  const sortedDays = Array.from(activeDays)
+    .map((key) => {
+      const [y, m, d] = key.split("-").map(Number);
+      return new Date(y, m, d);
+    })
+    .sort((a, b) => a.getTime() - b.getTime());
+
+  let longest = 0;
+  let run = 0;
+  let previous: Date | null = null;
+  for (const date of sortedDays) {
+    if (previous) {
+      const diffDays = Math.round((date.getTime() - previous.getTime()) / 86400000);
+      run = diffDays === 1 ? run + 1 : 1;
+    } else {
+      run = 1;
+    }
+    longest = Math.max(longest, run);
+    previous = date;
+  }
+  longest = Math.max(longest, current);
+
+  const startOfWeek = getStartOfWeek(today);
+  const dayLabels = ["L", "M", "M", "J", "V", "S", "D"];
+  const weekDays: StreakDay[] = dayLabels.map((label, i) => {
+    const date = new Date(startOfWeek);
+    date.setDate(date.getDate() + i);
+    return {
+      label,
+      active: activeDays.has(dayKey(date)),
+      isToday: dayKey(date) === dayKey(today),
+      isFuture: date.getTime() > today.getTime(),
+    };
+  });
+
+  return { current, longest, weekDays };
+}
+
+// Initiales d'une entreprise pour l'avatar rond (ex: "Century 21" -> "C2", "BNP Paribas" -> "BP")
+export function getInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "?";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+// Nombre de jours de retard (entier positif) entre une date de relance et aujourd'hui.
+export function daysOverdue(value: string | null | undefined): number {
+  if (!value) return 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(value);
+  target.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.round((today.getTime() - target.getTime()) / 86400000));
+}

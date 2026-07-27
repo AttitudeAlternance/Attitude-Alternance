@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes, forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "accent";
 type Size = "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -18,6 +18,8 @@ const variantStyles: Record<Variant, string> = {
     "bg-transparent text-ink hover:bg-black/5 focus-visible:ring-primary-200",
   danger:
     "bg-danger text-white hover:bg-danger/90 focus-visible:ring-danger/40",
+  accent:
+    "bg-accent text-ink hover:bg-accent-600 shadow-pop focus-visible:ring-accent-400",
 };
 
 const sizeStyles: Record<Size, string> = {
