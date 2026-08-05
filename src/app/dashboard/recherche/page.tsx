@@ -155,7 +155,7 @@ export default function RecherchePage() {
                   </p>
                   <div className="flex gap-2 mt-3">
                     {offre.urlCandidature && (
-                      
+                      <a
                         href={offre.urlCandidature}
                         target="_blank"
                         rel="noopener noreferrer"
