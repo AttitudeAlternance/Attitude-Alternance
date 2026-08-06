@@ -46,12 +46,19 @@ export async function searchAlternanceOffers({
     cache: "no-store",
   });
 
-  if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    throw new Error(`Erreur API La bonne alternance (${response.status}) : ${body}`);
+  const contentType = response.headers.get("content-type") ?? "";
+  const rawBody = await response.text();
+
+  // Diagnostic renforcé : si la réponse n'est pas du JSON (ou si le statut n'est pas 2xx), on
+  // inclut le statut HTTP réel, le type de contenu et un extrait du corps dans l'erreur — pour
+  // voir précisément ce qui bloque plutôt qu'un simple "ce n'est pas du JSON".
+  if (!contentType.includes("application/json") || !response.ok) {
+    throw new Error(
+      `Réponse inattendue de La bonne alternance — statut ${response.status}, type "${contentType}" : ${rawBody.slice(0, 400)}`
+    );
   }
 
-  const data = await response.json();
+  const data = JSON.parse(rawBody);
 
   const jobs: any[] = Array.isArray(data?.jobs) ? data.jobs : [];
   const recruiters: any[] = Array.isArray(data?.recruiters) ? data.recruiters : [];
