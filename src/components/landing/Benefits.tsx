@@ -1,5 +1,10 @@
 const benefits = [
   {
+    title: "Recherche d'offres intégrée",
+    text: "Des offres d'alternance ciblées par ville et secteur, ajoutées à votre suivi en un clic — plus besoin d'ouvrir un job board à part.",
+    icon: SearchIcon,
+  },
+  {
     title: "CRM de candidatures",
     text: "Suivez chaque entreprise, chaque statut et chaque date de relance dans un tableau clair.",
     icon: TableIcon,
@@ -28,10 +33,10 @@ export function Benefits() {
         <div className="max-w-xl">
           <span className="text-xs font-semibold uppercase tracking-wide text-primary-500">Bénéfices</span>
           <h2 className="mt-2 font-display text-2xl font-bold text-ink sm:text-3xl">
-            Tout ce qu&apos;il faut pour avancer sereinement.
+            Tout ce qu&apos;il faut pour avancer sereinement, au même endroit.
           </h2>
         </div>
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {benefits.map(({ title, text, icon: Icon }) => (
             <div key={title} className="rounded-2xl border border-line p-5">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-500">
@@ -44,6 +49,15 @@ export function Benefits() {
         </div>
       </div>
     </section>
+  );
+}
+
+function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
+    </svg>
   );
 }
 

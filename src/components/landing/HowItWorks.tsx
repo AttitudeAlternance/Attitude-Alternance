@@ -6,8 +6,8 @@ const steps = [
   },
   {
     n: "02",
-    title: "Ajoutez vos candidatures",
-    text: "Renseignez les entreprises visées ou importez celles déjà envoyées.",
+    title: "Trouvez et ajoutez une offre",
+    text: "Recherchez des offres d'alternance par ville et secteur, ajoutez-les à votre suivi en un clic.",
   },
   {
     n: "03",

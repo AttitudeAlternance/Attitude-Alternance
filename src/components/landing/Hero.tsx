@@ -18,14 +18,14 @@ export function Hero() {
             Pensé pour les étudiants en recherche d&apos;alternance
           </span>
           <h1 className="mt-5 font-display text-4xl font-bold leading-[1.1] text-ink sm:text-5xl">
-            Trouvez votre alternance plus vite, sans perdre le fil.
+            La seule application dont vous avez besoin pour trouver votre alternance.
           </h1>
           <p className="mt-4 max-w-md text-base font-medium text-primary-600 sm:text-lg">
-            L&apos;assistant qui centralise vos candidatures, personnalise vos messages, et repère les pièges avant vous.
+            Fini de jongler entre un tableur, ChatGPT, les jobboards et des pense-bêtes de relance.
           </p>
           <p className="mt-3 max-w-md text-base text-muted sm:text-lg">
-            Attitude Alternance centralise vos candidatures, rédige vos mails avec l&apos;IA
-            et vous rappelle qui relancer, au bon moment.
+            Attitude Alternance réunit la recherche d&apos;offres, le suivi de vos candidatures, la
+            génération de vos messages par IA et vos relances automatiques — dans un seul endroit.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link href="/signup">
@@ -38,6 +38,10 @@ export function Hero() {
             </Link>
           </div>
           <p className="mt-4 text-xs text-muted">Aucune carte bancaire requise pour démarrer.</p>
+          <p className="mt-3 text-xs text-muted">
+            <span className="font-medium text-ink/70">Remplace :</span> tableur Excel · ChatGPT · les
+            job boards · vos pense-bêtes de relance
+          </p>
         </div>
 
         {/* Élément signature : le pipeline de candidature, identique à celui du CRM */}
