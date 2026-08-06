@@ -66,6 +66,8 @@ export interface Profile {
   formation: string | null;
   target_city: string | null;
   target_sector: string | null;
+  target_sectors: string[];
+  search_radius: number;
   target_role: string | null;
   linkedin_url: string | null;
   cv_url: string | null;

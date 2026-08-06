@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea, Select, FieldHint } from "@/components/ui/Form";
 import { AGE_RANGES, type Profile } from "@/lib/types";
+import { SECTOR_OPTIONS, SEARCH_RADIUS_OPTIONS } from "@/lib/romeSecteurs";
 
 interface ProfileFormProps {
   userId: string;
@@ -51,6 +52,8 @@ export function ProfileForm({ userId, email, initialProfile }: ProfileFormProps)
     goal: initialProfile?.goal ?? "",
   });
   const [ageRange, setAgeRange] = useState(initialProfile?.age_range ?? "");
+  const [sectors, setSectors] = useState<string[]>(initialProfile?.target_sectors ?? []);
+  const [radius, setRadius] = useState(initialProfile?.search_radius ?? 30);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,12 +71,19 @@ export function ProfileForm({ userId, email, initialProfile }: ProfileFormProps)
     setSaved(false);
   }
 
+  function toggleSector(key: string) {
+    setSectors((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+    setSaved(false);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
 
-    const { error } = await supabase.from("profiles").upsert({ id: userId, ...values, age_range: ageRange || null });
+    const { error } = await supabase
+      .from("profiles")
+      .upsert({ id: userId, ...values, age_range: ageRange || null, target_sectors: sectors, search_radius: radius });
 
     setSaving(false);
     if (error) {
@@ -146,6 +156,44 @@ export function ProfileForm({ userId, email, initialProfile }: ProfileFormProps)
               onChange={(e) => update("target_role", e.target.value)}
               placeholder="Ex : Chargé(e) de communication"
             />
+          </div>
+
+          <div>
+            <Label>Secteurs pour la recherche d&apos;offres</Label>
+            <FieldHint>
+              Utilisés par la page &laquo;&nbsp;Offres d&apos;alternance&nbsp;&raquo; pour pré-remplir votre
+              recherche — vous pourrez toujours les ajuster ponctuellement sur place.
+            </FieldHint>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {SECTOR_OPTIONS.map((sector) => {
+                const active = sectors.includes(sector.key);
+                return (
+                  <button
+                    key={sector.key}
+                    type="button"
+                    onClick={() => toggleSector(sector.key)}
+                    className={
+                      active
+                        ? "rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-white"
+                        : "rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink/70 hover:border-primary-200 hover:bg-primary-50"
+                    }
+                  >
+                    {sector.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="search_radius">Rayon de recherche autour de votre ville</Label>
+            <Select id="search_radius" value={radius} onChange={(e) => { setRadius(parseInt(e.target.value, 10)); setSaved(false); }}>
+              {SEARCH_RADIUS_OPTIONS.map((km) => (
+                <option key={km} value={km}>
+                  {km} km
+                </option>
+              ))}
+            </Select>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

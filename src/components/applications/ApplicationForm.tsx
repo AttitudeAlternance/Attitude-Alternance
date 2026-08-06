@@ -15,6 +15,10 @@ function todayIso(): string {
 
 interface ApplicationFormProps {
   initialValue?: Application | null;
+  // Pré-remplissage partiel, utilisé notamment depuis la page "Offres d'alternance" : à la
+  // différence de initialValue (édition d'une candidature existante), ceci part toujours d'une
+  // nouvelle candidature (buildEmptyValue), en ne surchargeant que les champs fournis.
+  prefill?: Partial<ApplicationInput> | null;
   onSubmit: (values: ApplicationInput) => Promise<void>;
   onCancel: () => void;
 }
@@ -28,7 +32,7 @@ function buildEmptyValue(): ApplicationInput {
     role: "",
     offer_url: "",
     applied_at: today,
-    status: "a_candidater",
+    status: "envoyee",
     linkedin_contact: "",
     contact_email: "",
     next_followup_at: addBusinessDays(today, RECOMMENDED_FOLLOWUP_DAYS),
@@ -37,7 +41,7 @@ function buildEmptyValue(): ApplicationInput {
   };
 }
 
-export function ApplicationForm({ initialValue, onSubmit, onCancel }: ApplicationFormProps) {
+export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: ApplicationFormProps) {
   const [values, setValues] = useState<ApplicationInput>(
     initialValue
       ? {
@@ -52,7 +56,7 @@ export function ApplicationForm({ initialValue, onSubmit, onCancel }: Applicatio
           comment: initialValue.comment ?? "",
           job_description: initialValue.job_description ?? "",
         }
-      : buildEmptyValue()
+      : { ...buildEmptyValue(), ...(prefill ?? {}) }
   );
   const [loading, setLoading] = useState(false);
   // Le contact et l'email sont un peu moins essentiels : repliés par défaut à l'ajout,

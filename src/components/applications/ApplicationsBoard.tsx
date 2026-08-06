@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Form";
@@ -44,13 +45,34 @@ export function ApplicationsBoard({
   const [modalOpen, setModalOpen] = useState(false);
   const [limitModalOpen, setLimitModalOpen] = useState(false);
   const [editingApp, setEditingApp] = useState<Application | null>(null);
+  const [prefillValue, setPrefillValue] = useState<Partial<ApplicationInput> | null>(null);
   const [deletingApp, setDeletingApp] = useState<Application | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const supabase = createClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   // La limite gratuite s'étend avec les bonus de parrainage.
   const effectiveLimit = freeLimit + bonusApplications;
   const atLimit = plan === "free" && totalCreated >= effectiveLimit;
+
+  // Arrivée depuis la page "Offres d'alternance" (bouton "+ Ajouter à mes candidatures") :
+  // on ouvre directement la modale de création, pré-remplie avec l'offre choisie, puis on
+  // nettoie l'URL pour éviter de rouvrir la modale si la page est rechargée.
+  useEffect(() => {
+    const company = searchParams.get("prefillCompany");
+    const role = searchParams.get("prefillRole");
+    if (!company && !role) return;
+
+    openCreateModal({
+      company: company ?? "",
+      role: role ?? "",
+      offer_url: searchParams.get("prefillUrl") ?? "",
+      job_description: searchParams.get("prefillDescription") ?? "",
+    });
+    router.replace("/dashboard/applications");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtered = useMemo(() => {
     let list = [...applications];
@@ -74,18 +96,20 @@ export function ApplicationsBoard({
     return list;
   }, [applications, statusFilter, sortOrder, search]);
 
-  function openCreateModal() {
+  function openCreateModal(prefill?: Partial<ApplicationInput>) {
     if (atLimit) {
       setLimitModalOpen(true);
       return;
     }
     setEditingApp(null);
+    setPrefillValue(prefill ?? null);
     setError(null);
     setModalOpen(true);
   }
 
   function openEditModal(app: Application) {
     setEditingApp(app);
+    setPrefillValue(null);
     setError(null);
     setModalOpen(true);
   }
@@ -222,7 +246,12 @@ export function ApplicationsBoard({
         widthClass="max-w-2xl"
       >
         {error && <p className="mb-3 rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger">{error}</p>}
-        <ApplicationForm initialValue={editingApp} onSubmit={handleSubmit} onCancel={() => setModalOpen(false)} />
+        <ApplicationForm
+          initialValue={editingApp}
+          prefill={prefillValue}
+          onSubmit={handleSubmit}
+          onCancel={() => setModalOpen(false)}
+        />
       </Modal>
 
       <Modal

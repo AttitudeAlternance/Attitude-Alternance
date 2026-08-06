@@ -8,6 +8,7 @@ import { Logo } from "@/components/layout/PublicNavbar";
 const links = [
   { href: "/dashboard", label: "Vue d'ensemble", icon: GridIcon },
   { href: "/dashboard/applications", label: "Mes candidatures", icon: TableIcon },
+  { href: "/dashboard/offers", label: "Offres d'alternance", icon: SearchIcon },
   { href: "/dashboard/messages", label: "Générateur IA", icon: SparkleIcon },
   { href: "/dashboard/match-score", label: "Score de correspondance", icon: TargetIcon },
   { href: "/dashboard/offer-check", label: "Vérifier une offre", icon: ShieldIcon },
@@ -114,6 +115,14 @@ function TargetIcon(props: React.SVGProps<SVGSVGElement>) {
       <circle cx="12" cy="12" r="8" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="12" cy="12" r="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
     </svg>
   );
 }
