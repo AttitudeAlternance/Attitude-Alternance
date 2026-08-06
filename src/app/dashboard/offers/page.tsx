@@ -10,7 +10,7 @@ export default async function OffersPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("target_city, target_sectors, search_radius")
+    .select("target_city, target_sectors, search_radius, notify_new_offers")
     .eq("id", userData.user?.id)
     .maybeSingle();
 
@@ -25,9 +25,11 @@ export default async function OffersPage() {
       </div>
 
       <OfferSearch
+        userId={userData.user?.id ?? ""}
         initialCity={profile?.target_city ?? ""}
         initialSectors={profile?.target_sectors ?? []}
         initialRadius={profile?.search_radius ?? 30}
+        initialNotify={profile?.notify_new_offers ?? true}
       />
     </div>
   );

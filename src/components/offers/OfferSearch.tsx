@@ -7,26 +7,53 @@ import { Button } from "@/components/ui/Button";
 import { Input, Label, Select } from "@/components/ui/Form";
 import { SECTOR_OPTIONS, SEARCH_RADIUS_OPTIONS, sectorsToRomeCodes } from "@/lib/romeSecteurs";
 import { geocodeCity, type GeocodedLocation } from "@/lib/geocode";
+import { createClient } from "@/lib/supabase/client";
 import type { OfferResult } from "@/lib/labonnealternance";
 
 interface OfferSearchProps {
+  userId: string;
   initialCity: string;
   initialSectors: string[];
   initialRadius: number;
+  initialNotify: boolean;
 }
 
-export function OfferSearch({ initialCity, initialSectors, initialRadius }: OfferSearchProps) {
+export function OfferSearch({ userId, initialCity, initialSectors, initialRadius, initialNotify }: OfferSearchProps) {
   const [cityInput, setCityInput] = useState(initialCity);
   const [selectedSectors, setSelectedSectors] = useState<string[]>(initialSectors);
   const [radius, setRadius] = useState(initialRadius);
+  const [notifyNewOffers, setNotifyNewOffers] = useState(initialNotify);
+  const [savingNotify, setSavingNotify] = useState(false);
+  const [notifySaved, setNotifySaved] = useState(false);
   const [location, setLocation] = useState<GeocodedLocation | null>(null);
   const [offers, setOffers] = useState<OfferResult[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const supabase = createClient();
 
   function toggleSector(key: string) {
     setSelectedSectors((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+  }
+
+  // Coché : enregistre la case ET les critères actuels du formulaire, pour que le cron
+  // quotidien envoie une alerte cohérente avec la recherche en cours. Décoché : on ne
+  // touche qu'à la préférence, pas besoin d'effacer les critères déjà enregistrés.
+  async function handleToggleNotify(checked: boolean) {
+    setNotifyNewOffers(checked);
+    setNotifySaved(false);
+    setSavingNotify(true);
+
+    const payload: Record<string, unknown> = { id: userId, notify_new_offers: checked };
+    if (checked) {
+      payload.target_city = cityInput.trim();
+      payload.target_sectors = selectedSectors;
+      payload.search_radius = radius;
+    }
+
+    const { error: saveError } = await supabase.from("profiles").upsert(payload);
+    setSavingNotify(false);
+    if (!saveError) setNotifySaved(true);
   }
 
   async function handleSearch(e: React.FormEvent) {
@@ -136,6 +163,25 @@ export function OfferSearch({ initialCity, initialSectors, initialRadius }: Offe
               })}
             </div>
           </div>
+
+          <label className="flex items-start gap-2.5 rounded-xl border border-line px-3.5 py-3">
+            <input
+              type="checkbox"
+              checked={notifyNewOffers}
+              onChange={(e) => handleToggleNotify(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-line"
+            />
+            <span className="text-sm text-ink">
+              <span className="font-medium">M&apos;avertir par email des nouvelles offres</span>
+              <br />
+              <span className="text-xs text-muted">
+                Un email quotidien si de nouvelles offres correspondant à ces critères sont
+                publiées.
+                {savingNotify && " Enregistrement..."}
+                {!savingNotify && notifySaved && " Préférence enregistrée ✓"}
+              </span>
+            </span>
+          </label>
 
           {error && <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger">{error}</p>}
 
