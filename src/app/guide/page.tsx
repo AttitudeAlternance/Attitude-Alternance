@@ -6,7 +6,7 @@ import { GuideImage } from "@/components/guide/GuideImage";
 
 export const metadata = {
   title: "Guide de démarrage — Attitude Alternance",
-  description: "Prenez en main Attitude Alternance en 6 étapes simples : compte, CV, candidatures, messages IA, score de correspondance.",
+  description: "Prenez en main Attitude Alternance en 6 étapes simples : compte, CV, recherche d'offres, messages IA, score de correspondance.",
 };
 
 const steps = [
@@ -26,10 +26,10 @@ const steps = [
   },
   {
     number: 3,
-    title: "Ajoutez votre première candidature",
-    text: "Allez dans « Mes candidatures » puis cliquez sur « + Ajouter une candidature ». Renseignez l'entreprise, le poste, et si possible le lien ou la description complète de l'offre : elle sera réutilisée automatiquement pour générer vos messages.",
-    image: "/guide/03-candidature.jpg",
-    alt: "Formulaire d'ajout d'une candidature",
+    title: "Trouvez et ajoutez une offre",
+    text: "Allez dans « Offres d'alternance », indiquez votre ville et vos secteurs, puis cliquez sur « + Ajouter à mes candidatures » sur l'offre qui vous intéresse : elle rejoint directement votre suivi, avec le lien et la description déjà renseignés. Vous pouvez aussi ajouter une candidature trouvée ailleurs, directement depuis « Mes candidatures ».",
+    image: "/guide/03-recherche.jpg",
+    alt: "Page de recherche d'offres d'alternance avec résultats et bouton d'ajout",
   },
   {
     number: 4,
@@ -66,8 +66,9 @@ export default function GuidePage() {
             Prenez en main le site en 6 étapes
           </h1>
           <p className="mx-auto mt-3 max-w-lg text-sm text-muted sm:text-base">
-            Un espace pour centraliser vos candidatures, générer des messages personnalisés avec l&apos;IA, et ne
-            plus jamais oublier une relance. Suivez les étapes ci-dessous, dans l&apos;ordre.
+            Un espace pour trouver des offres, centraliser vos candidatures, générer des messages
+            personnalisés avec l&apos;IA, et ne plus jamais oublier une relance. Suivez les étapes
+            ci-dessous, dans l&apos;ordre.
           </p>
         </div>
 
