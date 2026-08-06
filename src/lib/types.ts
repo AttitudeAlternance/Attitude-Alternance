@@ -68,6 +68,7 @@ export interface Profile {
   target_sector: string | null;
   target_sectors: string[];
   search_radius: number;
+  notify_new_offers: boolean;
   target_role: string | null;
   linkedin_url: string | null;
   cv_url: string | null;

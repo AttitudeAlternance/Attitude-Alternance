@@ -51,7 +51,8 @@ export async function GET(request: Request) {
   const { data: searchProfiles } = await supabase
     .from("profiles")
     .select("id, target_city, target_sectors, search_radius")
-    .not("target_city", "is", null);
+    .not("target_city", "is", null)
+    .eq("notify_new_offers", true);
 
   const newOffersByUser = new Map<string, { count: number; examples: { title: string; company: string }[] }>();
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);

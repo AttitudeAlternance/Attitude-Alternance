@@ -54,6 +54,7 @@ export function ProfileForm({ userId, email, initialProfile }: ProfileFormProps)
   const [ageRange, setAgeRange] = useState(initialProfile?.age_range ?? "");
   const [sectors, setSectors] = useState<string[]>(initialProfile?.target_sectors ?? []);
   const [radius, setRadius] = useState(initialProfile?.search_radius ?? 30);
+  const [notifyNewOffers, setNotifyNewOffers] = useState(initialProfile?.notify_new_offers ?? true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,9 +82,14 @@ export function ProfileForm({ userId, email, initialProfile }: ProfileFormProps)
     setSaving(true);
     setError(null);
 
-    const { error } = await supabase
-      .from("profiles")
-      .upsert({ id: userId, ...values, age_range: ageRange || null, target_sectors: sectors, search_radius: radius });
+    const { error } = await supabase.from("profiles").upsert({
+      id: userId,
+      ...values,
+      age_range: ageRange || null,
+      target_sectors: sectors,
+      search_radius: radius,
+      notify_new_offers: notifyNewOffers,
+    });
 
     setSaving(false);
     if (error) {
@@ -195,6 +201,23 @@ export function ProfileForm({ userId, email, initialProfile }: ProfileFormProps)
               ))}
             </Select>
           </div>
+
+          <label className="flex items-start gap-2.5 rounded-xl border border-line px-3.5 py-3">
+            <input
+              type="checkbox"
+              checked={notifyNewOffers}
+              onChange={(e) => { setNotifyNewOffers(e.target.checked); setSaved(false); }}
+              className="mt-0.5 h-4 w-4 rounded border-line"
+            />
+            <span className="text-sm text-ink">
+              <span className="font-medium">M&apos;avertir par email des nouvelles offres</span>
+              <br />
+              <span className="text-xs text-muted">
+                Un email quotidien si de nouvelles offres correspondant à votre ville et vos secteurs
+                sont publiées — vous pouvez décocher à tout moment.
+              </span>
+            </span>
+          </label>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
