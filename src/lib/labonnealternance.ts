@@ -4,7 +4,7 @@
 // api.apprentissage.beta.gouv.fr), utilisée directement en en-tête Authorization — pas de
 // circuit OAuth avec jeton temporaire à renouveler, contrairement aux API France Travail
 // classiques (Stripe/Resend suivent un principe similaire de clé fixe).
-const SEARCH_URL = "https://api.apprentissage.beta.gouv.fr/job/v1/search";
+const SEARCH_URL = "https://api.apprentissage.beta.gouv.fr/api/job/v1/search";
 
 export interface OfferSearchParams {
   latitude: number;
