@@ -36,10 +36,11 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
     setSelectedSectors((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   }
 
-  // Coché : enregistre la case ET les critères actuels du formulaire, pour que le cron
-  // quotidien envoie une alerte cohérente avec la recherche en cours. Décoché : on ne
-  // touche qu'à la préférence, pas besoin d'effacer les critères déjà enregistrés.
-  async function handleToggleNotify(checked: boolean) {
+  // Enregistre la préférence ET les critères actuels — appelée à la fois quand on coche/décoche
+  // la case, et après chaque recherche réussie tant que la case est cochée. C'est ce qui garantit
+  // que l'alerte du lendemain porte toujours sur la dernière recherche affichée à l'écran, jamais
+  // sur une ville ou des secteurs qu'on aurait changés depuis sans y repenser.
+  async function syncNotificationPreference(checked: boolean) {
     setNotifyNewOffers(checked);
     setNotifySaved(false);
     setSavingNotify(true);
@@ -97,6 +98,10 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
         return;
       }
       setOffers(data.offers);
+
+      if (notifyNewOffers) {
+        await syncNotificationPreference(true);
+      }
     } catch {
       setError("Une erreur est survenue pendant la recherche.");
       setOffers(null);
@@ -168,7 +173,7 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
             <input
               type="checkbox"
               checked={notifyNewOffers}
-              onChange={(e) => handleToggleNotify(e.target.checked)}
+              onChange={(e) => syncNotificationPreference(e.target.checked)}
               className="mt-0.5 h-4 w-4 rounded border-line"
             />
             <span className="text-sm text-ink">
@@ -176,7 +181,7 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
               <br />
               <span className="text-xs text-muted">
                 Un email quotidien si de nouvelles offres correspondant à ces critères sont
-                publiées.
+                publiées. Se met à jour à chaque recherche tant que la case reste cochée.
                 {savingNotify && " Enregistrement..."}
                 {!savingNotify && notifySaved && " Préférence enregistrée ✓"}
               </span>
