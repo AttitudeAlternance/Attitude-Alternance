@@ -4,7 +4,7 @@
 // api.apprentissage.beta.gouv.fr), utilisée directement en en-tête Authorization — pas de
 // circuit OAuth avec jeton temporaire à renouveler, contrairement aux API France Travail
 // classiques (Stripe/Resend suivent un principe similaire de clé fixe).
-const SEARCH_URL = "https://api.apprentissage.beta.gouv.fr/v1/jobs/search";
+const SEARCH_URL = "https://api.apprentissage.beta.gouv.fr/job/v1/search";
 
 export interface OfferSearchParams {
   latitude: number;
@@ -39,7 +39,7 @@ export async function searchAlternanceOffers({
   url.searchParams.set("latitude", latitude.toString());
   url.searchParams.set("longitude", longitude.toString());
   url.searchParams.set("radius", radius.toString());
-  romes.forEach((code) => url.searchParams.append("romes", code));
+  url.searchParams.set("romes", romes.join(","));
 
   const response = await fetch(url.toString(), {
     headers: { Authorization: `Bearer ${apiKey}` },
@@ -53,24 +53,33 @@ export async function searchAlternanceOffers({
 
   const data = await response.json();
 
-  // La forme exacte de la réponse (jobs.results vs results à la racine, noms de champs) a été
-  // reconstituée à partir de la documentation publique du service, avec plusieurs replis
-  // défensifs — à ajuster si la structure réelle diffère légèrement une fois testée en vrai.
-  const rawJobs: any[] = data?.jobs?.results ?? data?.jobs ?? data?.results ?? [];
+  const jobs: any[] = Array.isArray(data?.jobs) ? data.jobs : [];
+  const recruiters: any[] = Array.isArray(data?.recruiters) ? data.recruiters : [];
 
-  return rawJobs.map((job, index) => ({
-    id: job?.identifier?.id ?? job?.id ?? `offre-${index}`,
-    title: job?.offer?.title ?? job?.title ?? "Poste en alternance",
-    company:
-      job?.workplace?.name ??
-      job?.workplace?.brand ??
-      job?.workplace?.legal_name ??
-      "Entreprise non précisée",
-    city: job?.workplace?.location?.address ?? job?.workplace?.location?.city ?? null,
-    contractType: job?.contract?.type ?? null,
+  const jobResults: OfferResult[] = jobs.map((job, index) => ({
+    id: job?.identifier?.id ?? `offre-${index}`,
+    title: job?.offer?.title ?? "Poste en alternance",
+    company: job?.workplace?.name ?? job?.workplace?.brand ?? job?.workplace?.legal_name ?? "Entreprise non précisée",
+    city: job?.workplace?.location?.address ?? null,
+    contractType: Array.isArray(job?.contract?.type) ? job.contract.type.join(", ") : null,
     description: job?.offer?.description ?? null,
     applyUrl: job?.apply?.url ?? null,
-    isSpontaneous: job?.identifier?.partner_label === "OFFRES_EMPLOI_LBA" ? false : Boolean(job?.recruiter),
+    isSpontaneous: false,
   }));
+
+  // Les "recruteurs" sont des entreprises à fort potentiel n'ayant publié aucune offre : la
+  // candidature spontanée leur est suggérée, sans intitulé de poste ni description associée.
+  const recruiterResults: OfferResult[] = recruiters.map((rec, index) => ({
+    id: rec?.identifier?.id ?? `recruteur-${index}`,
+    title: "Candidature spontanée suggérée",
+    company: rec?.workplace?.name ?? rec?.workplace?.brand ?? rec?.workplace?.legal_name ?? "Entreprise non précisée",
+    city: rec?.workplace?.location?.address ?? null,
+    contractType: null,
+    description: rec?.workplace?.description ?? null,
+    applyUrl: rec?.apply?.url ?? null,
+    isSpontaneous: true,
+  }));
+
+  return [...jobResults, ...recruiterResults];
 }
 
