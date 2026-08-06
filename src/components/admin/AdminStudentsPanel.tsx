@@ -26,6 +26,12 @@ interface EmailTemplate {
 // Brouillons de départ, à adapter avant envoi — rien n'est envoyé sans clic explicite sur "Confirmer".
 const TEMPLATES: EmailTemplate[] = [
   {
+    label: "🎉 Annonce : recherche d'offres intégrée",
+    subject: "Nouveau sur Attitude Alternance : trouvez vos offres sans quitter le site",
+    message:
+      "Bonjour {prenom},\n\nUne grande nouveauté vient d'arriver sur Attitude Alternance : vous pouvez désormais chercher des offres d'alternance directement depuis votre espace, sans passer par LinkedIn, HelloWork ou un autre site.\n\nRendez-vous dans « Offres d'alternance » (nouveau menu à gauche) :\n\n1. Indiquez votre ville et vos secteurs recherchés.\n\n2. Parcourez les offres correspondantes.\n\n3. Ajoutez celles qui vous intéressent à votre suivi en un clic, avec le lien et la description déjà préremplis.\n\nEt pour ne rien manquer : cochez « M'avertir par email des nouvelles offres » sur cette même page. Vous recevrez alors chaque jour un résumé des nouvelles offres correspondant à vos critères, directement dans le même email que vos rappels de relance habituels.\n\nL'objectif : que vous n'ayez plus besoin d'ouvrir dix onglets différents pour votre recherche.\n\nÀ bientôt,\nL'équipe Attitude Alternance",
+  },
+  {
     label: "Bonnes pratiques de recherche",
     subject: "3 conseils pour accélérer votre recherche d'alternance",
     message:
