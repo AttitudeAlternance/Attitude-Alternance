@@ -197,7 +197,7 @@ export function ApplicationsBoard({
               ✨ Étudiant+ : candidatures illimitées
             </Link>
           )}
-          <Button onClick={openCreateModal}>+ Ajouter une candidature</Button>
+          <Button onClick={() => openCreateModal()}>+ Ajouter une candidature</Button>
         </div>
       </div>
 
@@ -216,7 +216,7 @@ export function ApplicationsBoard({
         <EmptyState
           title="Aucune candidature pour le moment"
           description="Ajoutez votre première candidature pour commencer à suivre votre recherche d'alternance."
-          action={<Button onClick={openCreateModal}>+ Ajouter une candidature</Button>}
+          action={<Button onClick={() => openCreateModal()}>+ Ajouter une candidature</Button>}
         />
       ) : filtered.length === 0 ? (
         <EmptyState
