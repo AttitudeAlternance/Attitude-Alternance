@@ -22,6 +22,7 @@ export interface OfferResult {
   description: string | null;
   applyUrl: string | null;
   isSpontaneous: boolean;
+  publicationDate: string | null;
 }
 
 export async function searchAlternanceOffers({
@@ -72,10 +73,11 @@ export async function searchAlternanceOffers({
     description: job?.offer?.description ?? null,
     applyUrl: job?.apply?.url ?? null,
     isSpontaneous: false,
+    publicationDate: job?.offer?.publication?.creation ?? null,
   }));
 
   // Les "recruteurs" sont des entreprises à fort potentiel n'ayant publié aucune offre : la
-  // candidature spontanée leur est suggérée, sans intitulé de poste ni description associée.
+  // candidature spontanée leur est suggérée, sans intitulé de poste ni date de publication.
   const recruiterResults: OfferResult[] = recruiters.map((rec, index) => ({
     id: rec?.identifier?.id ?? `recruteur-${index}`,
     title: "Candidature spontanée suggérée",
@@ -85,6 +87,7 @@ export async function searchAlternanceOffers({
     description: rec?.workplace?.description ?? null,
     applyUrl: rec?.apply?.url ?? null,
     isSpontaneous: true,
+    publicationDate: null,
   }));
 
   return [...jobResults, ...recruiterResults];

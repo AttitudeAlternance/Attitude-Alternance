@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email/sendEmail";
+import { geocodeCity } from "@/lib/geocode";
+import { sectorsToRomeCodes } from "@/lib/romeSecteurs";
+import { searchAlternanceOffers } from "@/lib/labonnealternance";
 import type { Application } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -21,38 +24,85 @@ export async function GET(request: Request) {
 
   const supabase = createAdminClient();
   const today = new Date().toISOString().slice(0, 10);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://attitude-alternance.fr";
 
-  // Toutes les candidatures dont la relance est due aujourd'hui ou en retard,
+  // 1) Toutes les candidatures dont la relance est due aujourd'hui ou en retard,
   // et qui ne sont pas déjà closes (acceptée ou refusée). Les candidatures encore
   // "à candidater" restent volontairement incluses : si l'étudiant a oublié de
   // postuler, le rappel lui sert justement de piqûre de rappel pour le faire.
-  const { data: applications, error } = await supabase
+  const { data: applications } = await supabase
     .from("applications")
     .select("*")
     .not("next_followup_at", "is", null)
     .lte("next_followup_at", today)
     .not("status", "in", '("accepte","refus")');
 
-  if (error) {
-    return NextResponse.json({ error: "Erreur lors de la récupération des candidatures." }, { status: 500 });
-  }
-
   const apps = (applications ?? []) as Application[];
-  if (apps.length === 0) {
-    return NextResponse.json({ sent: 0, message: "Aucune relance due aujourd'hui." });
+  const appsByUser = new Map<string, Application[]>();
+  for (const app of apps) {
+    const list = appsByUser.get(app.user_id) ?? [];
+    list.push(app);
+    appsByUser.set(app.user_id, list);
   }
 
-  // Regroupe les candidatures par utilisateur
-  const byUser = new Map<string, Application[]>();
-  for (const app of apps) {
-    const list = byUser.get(app.user_id) ?? [];
-    list.push(app);
-    byUser.set(app.user_id, list);
+  // 2) Étudiants ayant paramétré une recherche d'offres (ville + au moins un secteur) : on
+  // relance la même recherche que sur /dashboard/offers, et on ne retient que les offres
+  // publiées dans les dernières 24h — pas la peine de recompter les mêmes offres chaque jour.
+  const { data: searchProfiles } = await supabase
+    .from("profiles")
+    .select("id, target_city, target_sectors, search_radius")
+    .not("target_city", "is", null);
+
+  const newOffersByUser = new Map<string, { count: number; examples: { title: string; company: string }[] }>();
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  for (const profile of searchProfiles ?? []) {
+    const sectors = (profile.target_sectors ?? []) as string[];
+    if (!profile.target_city || sectors.length === 0) continue;
+
+    const romes = sectorsToRomeCodes(sectors);
+    if (romes.length === 0) continue;
+
+    try {
+      const geo = await geocodeCity(profile.target_city);
+      if (!geo) continue;
+
+      const offers = await searchAlternanceOffers({
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        radius: profile.search_radius ?? 30,
+        romes,
+      });
+
+      const recent = offers.filter(
+        (o) => !o.isSpontaneous && o.publicationDate && new Date(o.publicationDate) >= oneDayAgo
+      );
+
+      if (recent.length > 0) {
+        newOffersByUser.set(profile.id, {
+          count: recent.length,
+          examples: recent.slice(0, 3).map((o) => ({ title: o.title, company: o.company })),
+        });
+      }
+    } catch (err) {
+      // Un échec de recherche pour un étudiant ne doit pas empêcher l'envoi des emails
+      // des autres — on log et on continue.
+      console.error(`Erreur recherche d'offres pour le profil ${profile.id}:`, err);
+    }
+
+    // Petite pause entre chaque appel, par égard pour le quota de l'API (60 appels/minute).
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+
+  // 3) Union des étudiants ayant au moins une raison de recevoir un email aujourd'hui.
+  const userIds = new Set<string>([...appsByUser.keys(), ...newOffersByUser.keys()]);
+  if (userIds.size === 0) {
+    return NextResponse.json({ sent: 0, message: "Rien à envoyer aujourd'hui." });
   }
 
   let sentCount = 0;
 
-  for (const [userId, userApps] of byUser) {
+  for (const userId of userIds) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("email, first_name")
@@ -61,8 +111,10 @@ export async function GET(request: Request) {
 
     if (!profile?.email) continue;
 
+    const userApps = appsByUser.get(userId) ?? [];
     const toSend = userApps.filter((a) => a.status === "a_candidater");
     const toFollowUp = userApps.filter((a) => a.status !== "a_candidater");
+    const offersInfo = newOffersByUser.get(userId);
 
     const listItem = (a: Application) => `<li><strong>${escapeHtml(a.company)}</strong> — ${escapeHtml(a.role)}</li>`;
 
@@ -78,21 +130,31 @@ export async function GET(request: Request) {
         ? `<p>À relancer aujourd'hui ou en retard :</p><ul>${toFollowUp.map(listItem).join("")}</ul>`
         : "";
 
+    const offersBlock = offersInfo
+      ? `<p><strong>${offersInfo.count} nouvelle${offersInfo.count > 1 ? "s" : ""} offre${
+          offersInfo.count > 1 ? "s" : ""
+        }</strong> correspondant à votre recherche, publiée${offersInfo.count > 1 ? "s" : ""} depuis hier :</p><ul>${offersInfo.examples
+          .map((o) => `<li><strong>${escapeHtml(o.company)}</strong> — ${escapeHtml(o.title)}</li>`)
+          .join("")}</ul><p><a href="${siteUrl}/dashboard/offers">Voir toutes les offres</a></p>`
+      : "";
+
     const html = `
       <p>Bonjour ${escapeHtml(profile.first_name || "")},</p>
-      <p>Un point sur vos candidatures sur Attitude Alternance :</p>
+      <p>Un point sur votre recherche d'alternance sur Attitude Alternance :</p>
       ${toSendBlock}
       ${toFollowUpBlock}
-      <p>Connectez-vous à votre espace pour générer un message en un clic.</p>
+      ${offersBlock}
+      <p>Connectez-vous à votre espace pour en savoir plus.</p>
     `;
 
-    const subjectParts = [];
+    const subjectParts: string[] = [];
     if (toFollowUp.length > 0) subjectParts.push(`${toFollowUp.length} relance(s)`);
     if (toSend.length > 0) subjectParts.push(`${toSend.length} candidature(s) à envoyer`);
+    if (offersInfo) subjectParts.push(`${offersInfo.count} nouvelle(s) offre(s)`);
 
     const sent = await sendEmail({
       to: profile.email,
-      subject: `${subjectParts.join(" et ")} aujourd'hui — Attitude Alternance`,
+      subject: `${subjectParts.join(", ")} — Attitude Alternance`,
       html,
     });
 
@@ -101,7 +163,8 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     sent: sentCount,
-    usersConcerned: byUser.size,
+    usersConcerned: userIds.size,
+    usersWithNewOffers: newOffersByUser.size,
     activationEmailsSent: await sendActivationReminders(supabase),
   });
 }
@@ -121,7 +184,7 @@ async function sendActivationReminders(supabase: ReturnType<typeof createAdminCl
 
   if (!inactiveProfiles || inactiveProfiles.length === 0) return 0;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://attitude-alternance.vercel.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://attitude-alternance.fr";
   let sentCount = 0;
 
   for (const profile of inactiveProfiles) {

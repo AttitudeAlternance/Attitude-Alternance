@@ -6,18 +6,13 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Select } from "@/components/ui/Form";
 import { SECTOR_OPTIONS, SEARCH_RADIUS_OPTIONS, sectorsToRomeCodes } from "@/lib/romeSecteurs";
+import { geocodeCity, type GeocodedLocation } from "@/lib/geocode";
 import type { OfferResult } from "@/lib/labonnealternance";
 
 interface OfferSearchProps {
   initialCity: string;
   initialSectors: string[];
   initialRadius: number;
-}
-
-interface GeocodedLocation {
-  label: string;
-  latitude: number;
-  longitude: number;
 }
 
 export function OfferSearch({ initialCity, initialSectors, initialRadius }: OfferSearchProps) {
@@ -32,18 +27,6 @@ export function OfferSearch({ initialCity, initialSectors, initialRadius }: Offe
 
   function toggleSector(key: string) {
     setSelectedSectors((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
-  }
-
-  // La géolocalisation utilise l'API Adresse (Base Adresse Nationale), un service public
-  // gratuit et sans authentification — pas besoin de clé, juste un texte de ville ou code postal.
-  async function geocode(query: string): Promise<GeocodedLocation | null> {
-    const res = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=1`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    const feature = data?.features?.[0];
-    if (!feature) return null;
-    const [longitude, latitude] = feature.geometry.coordinates;
-    return { label: feature.properties.label, latitude, longitude };
   }
 
   async function handleSearch(e: React.FormEvent) {
@@ -62,7 +45,7 @@ export function OfferSearch({ initialCity, initialSectors, initialRadius }: Offe
     setLoading(true);
     setHasSearched(true);
     try {
-      const geo = await geocode(cityInput.trim());
+      const geo = await geocodeCity(cityInput.trim());
       if (!geo) {
         setError("Ville introuvable, essayez avec un code postal ou une orthographe différente.");
         setOffers(null);
