@@ -66,17 +66,23 @@ export function InterviewPrepGenerator({ profile, applications }: InterviewPrepG
     const text = [
       `PRÉPARATION D'ENTRETIEN — ${selectedApp.role} chez ${selectedApp.company}`,
       "",
-      "CE QUE RECHERCHE L'ENTREPRISE",
-      prep.syntheseAnnonce,
+      "CE QUE L'ANNONCE RÉVÈLE VRAIMENT",
+      ...prep.besoinsImplicites.map((item) => `- ${item}`),
       "",
-      "À VÉRIFIER AVANT L'ENTRETIEN",
-      ...prep.aVerifier.map((item) => `- ${item}`),
+      "VOTRE AXE DIFFÉRENCIANT",
+      prep.axeDifferenciant,
+      "",
+      "LE POSTE EN BREF",
+      prep.syntheseAnnonce,
       "",
       "VOTRE PITCH",
       prep.pitch,
       "",
-      "VOS POINTS FORTS À METTRE EN AVANT",
+      "VOS AUTRES POINTS FORTS",
       ...prep.pointsForts.map((item) => `- ${item}`),
+      "",
+      "ASTUCES QUI PEUVENT FAIRE LA DIFFÉRENCE",
+      ...prep.astuces.map((item) => `- ${item}`),
       "",
       "QUESTIONS PROBABLES",
       ...prep.questionsProbables.map((item) => `- ${item}`),
@@ -167,18 +173,25 @@ export function InterviewPrepGenerator({ profile, applications }: InterviewPrepG
           </div>
 
           <Card>
-            <h3 className="font-display text-sm font-semibold text-ink">🏢 Ce que recherche l&apos;entreprise</h3>
-            <p className="mt-2 text-sm text-ink/85">{prep.syntheseAnnonce}</p>
-          </Card>
-
-          <div className="rounded-2xl border border-warn/30 bg-warn-50 p-6 shadow-card">
-            <h3 className="font-display text-sm font-semibold text-ink">🔍 À vérifier vous-même avant l&apos;entretien</h3>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink/85">
-              {prep.aVerifier.map((item, i) => (
-                <li key={i}>{item}</li>
+            <h3 className="font-display text-sm font-semibold text-ink">🔎 Ce que l&apos;annonce révèle vraiment</h3>
+            <ul className="mt-2 space-y-2 text-sm text-ink/85">
+              {prep.besoinsImplicites.map((item, i) => (
+                <li key={i} className="border-l-2 border-primary-200 pl-3">
+                  {item}
+                </li>
               ))}
             </ul>
+          </Card>
+
+          <div className="rounded-2xl border-2 border-primary bg-primary-50 p-6 shadow-card">
+            <h3 className="font-display text-sm font-semibold text-primary-600">⭐ Votre axe différenciant</h3>
+            <p className="mt-2 text-sm font-medium text-ink">{prep.axeDifferenciant}</p>
           </div>
+
+          <Card>
+            <h3 className="font-display text-sm font-semibold text-ink">🏢 Le poste en bref</h3>
+            <p className="mt-2 text-sm text-ink/85">{prep.syntheseAnnonce}</p>
+          </Card>
 
           <Card>
             <h3 className="font-display text-sm font-semibold text-ink">🎤 Votre pitch</h3>
@@ -186,13 +199,22 @@ export function InterviewPrepGenerator({ profile, applications }: InterviewPrepG
           </Card>
 
           <Card>
-            <h3 className="font-display text-sm font-semibold text-ink">💪 Vos points forts à mettre en avant</h3>
+            <h3 className="font-display text-sm font-semibold text-ink">💪 Vos autres points forts</h3>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink/85">
               {prep.pointsForts.map((item, i) => (
                 <li key={i}>{item}</li>
               ))}
             </ul>
           </Card>
+
+          <div className="rounded-2xl border border-accent-100 bg-accent-50 p-6 shadow-card">
+            <h3 className="font-display text-sm font-semibold text-ink">💡 Astuces qui peuvent faire la différence</h3>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink/85">
+              {prep.astuces.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </div>
 
           <Card>
             <h3 className="font-display text-sm font-semibold text-ink">❓ Questions probables</h3>

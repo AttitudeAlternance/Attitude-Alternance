@@ -8,8 +8,10 @@ export interface GenerateInterviewPrepParams {
 }
 
 export interface InterviewPrep {
+  besoinsImplicites: string[];
+  axeDifferenciant: string;
   syntheseAnnonce: string;
-  aVerifier: string[];
+  astuces: string[];
   pitch: string;
   pointsForts: string[];
   questionsProbables: string[];
@@ -28,9 +30,10 @@ export interface GenerateInterviewPrepResult {
  * est configurée ; sinon un générateur local plus basique prend le relais.
  *
  * Important : l'IA n'a pas accès à des données réelles et à jour sur l'entreprise
- * (pas de recherche web). Elle synthétise donc ce qui est écrit dans l'annonce, et
- * oriente explicitement l'étudiant à vérifier lui-même le reste (site, actualités) —
- * plutôt que d'inventer des faits qui semblent précis mais ne le sont pas.
+ * (pas de recherche web). L'objectif ici n'est donc pas de fournir des faits "vérifiés"
+ * sur l'entreprise, mais de vraiment interpréter le texte de l'annonce — repérer ce
+ * qu'elle demande sans le dire explicitement — plutôt que de se contenter de la
+ * reformuler, ce qui n'apporterait aucune valeur par rapport à une simple relecture.
  */
 export async function generateInterviewPrep(
   params: GenerateInterviewPrepParams
@@ -53,22 +56,25 @@ export async function generateInterviewPrep(
 // ----------------------------------------------------------------------------
 // Génération réelle via l'API Anthropic (Claude)
 // ----------------------------------------------------------------------------
-const SYSTEM_PROMPT = `Tu aides des étudiants à se préparer à un entretien d'embauche pour une alternance.
+const SYSTEM_PROMPT = `Tu aides des étudiants à se préparer à un entretien d'embauche pour une alternance. Ta valeur ajoutée, c'est de lire l'annonce comme un recruteur expérimenté la lirait — pas de la reformuler.
 
 Tu dois répondre UNIQUEMENT avec un objet JSON valide, sans texte avant ni après, sans balises markdown (pas de \`\`\`json), correspondant exactement à ce schéma :
 
 {
-  "syntheseAnnonce": "2 à 3 phrases résumant ce que l'entreprise recherche vraiment, basé uniquement sur le texte de l'annonce fourni",
-  "aVerifier": ["3 éléments précis et concrets que l'étudiant doit aller vérifier lui-même avant l'entretien (site web de l'entreprise, actualités récentes, réseaux sociaux...)"],
-  "pitch": "Un pitch de présentation personnelle à l'oral, 30 à 45 secondes, construit à partir du CV et du poste visé",
-  "pointsForts": ["3 à 4 points forts du candidat à mettre en avant, en lien direct avec les attentes de l'annonce"],
+  "besoinsImplicites": ["2 à 3 éléments que l'annonce demande SANS le dire explicitement. Chaque élément doit suivre le format : « [passage ou idée clé de l'annonce] » → [ce que ça révèle vraiment sur le profil recherché]. Exemples de raisonnement à appliquer : un poste commercial qui mentionne des cycles de vente longs ou des comptes grands groupes révèle un besoin d'expérience en B2B, pas juste en vente ; une mention d'« environnement exigeant », « rythme soutenu » ou « forte autonomie » révèle un besoin de résilience et de gestion du stress ; une mention de « plusieurs projets en parallèle » révèle un besoin d'organisation et de priorisation ; un poste dans une petite structure/startup révèle un besoin de polyvalence et d'initiative, pas seulement de compétence technique. Applique ce type de raisonnement au cas précis, ne te limite pas à ces exemples.",
+  "axeDifferenciant": "LE point fort central que le candidat doit mettre en avant en premier pour CE poste précis — pas une qualité générique, mais le croisement le plus fort et le plus concret entre son CV et les besoins implicites identifiés ci-dessus. Formule-le comme un conseil direct et actionnable (« Mets en avant... », « Ton expérience de... est exactement ce qu'ils cherchent car... »), avec la justification concrète tirée du CV.",
+  "syntheseAnnonce": "2 phrases maximum sur ce que couvre concrètement le poste au quotidien — factuel, pas d'interprétation ici (elle est déjà dans besoinsImplicites).",
+  "astuces": ["2 à 3 astuces de préparation CIBLÉES selon le type de métier du poste (détermine d'abord la famille : commercial, marketing/communication, technique/développement, RH, finance/gestion, support client...), formulées comme des conseils concrets et non génériques. Exemples de logique à appliquer : poste commercial → regarder les clients de référence et l'actualité commerciale de l'entreprise ; poste marketing/communication → regarder le ton et les réseaux sociaux de la marque, ses dernières campagnes ; poste technique → regarder la stack technique utilisée, le blog ingénierie ou le GitHub de l'entreprise ; poste RH → regarder la culture d'entreprise affichée et les avis d'anciens salariés. Adapte au poste réel, ne te limite pas à ces exemples, et ne dis jamais juste « regardez le site » sans préciser quoi y chercher précisément.",
+  "pitch": "Un pitch de présentation personnelle à l'oral, 30 à 45 secondes, construit à partir du CV et du poste visé, qui intègre naturellement l'axe différenciant identifié plus haut",
+  "pointsForts": ["3 points forts SUPPLÉMENTAIRES à l'axe différenciant (ne le répète pas), en lien avec les attentes de l'annonce"],
   "questionsProbables": ["5 à 6 questions d'entretien probables, spécifiques au poste et à ce que décrit l'annonce — pas des questions génériques passe-partout"],
   "questionsARecruteur": ["3 questions intelligentes à poser au recruteur en fin d'entretien, en lien avec cette offre précise"]
 }
 
 Règles impératives :
-- N'invente jamais de faits précis et vérifiables sur l'entreprise (chiffres, dates, actualités) que tu ne peux pas connaître avec certitude à partir de l'annonce fournie — pour tout le reste, oriente l'étudiant à vérifier lui-même via "aVerifier".
-- Base-toi réellement sur le CV et l'annonce fournis : pas de conseils génériques qui iraient pour n'importe quel poste.
+- N'invente jamais de faits précis et vérifiables sur l'entreprise elle-même (chiffres, dates, actualités) que tu ne peux pas connaître avec certitude à partir de l'annonce fournie.
+- En revanche, INTERPRÈTE librement et avec assurance ce que l'annonce révèle sur le profil recherché — c'est exactement ce qui est attendu de toi, ne reste pas en surface.
+- Base-toi réellement sur le CV et l'annonce fournis : pas de conseils génériques qui iraient pour n'importe quel poste ou n'importe quel candidat.
 - Écris en français, dans un style direct et concret, jamais scolaire ni robotique.
 - Le JSON doit être strictement valide (guillemets doubles, pas de virgule finale, pas de commentaire).`;
 
@@ -80,10 +86,10 @@ function buildPrompt(params: GenerateInterviewPrepParams): string {
     formation ? `Formation actuelle du candidat : ${formation}.` : "",
     jobDescription
       ? `Texte de l'annonce :\n"""\n${jobDescription}\n"""`
-      : "Aucune description d'offre fournie — reste plus générique sur la synthèse de l'annonce et les questions probables, en te basant sur l'intitulé du poste.",
+      : "Aucune description d'offre fournie — base ton interprétation sur l'intitulé du poste et les attentes typiques de ce type de métier, en le signalant implicitement par des formulations moins définitives.",
     cvSummary
       ? `Résumé du profil du candidat extrait de son CV :\n"""\n${cvSummary}\n"""`
-      : "Aucun CV fourni — construis un pitch et des points forts plus génériques, adaptés au poste visé.",
+      : "Aucun CV fourni — l'axe différenciant et le pitch doivent rester génériques mais toujours construits à partir des besoins implicites de l'annonce, pas de banalités.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -119,8 +125,10 @@ async function generateWithClaude(params: GenerateInterviewPrepParams, apiKey: s
   const parsed = JSON.parse(cleaned);
 
   return {
+    besoinsImplicites: Array.isArray(parsed.besoinsImplicites) ? parsed.besoinsImplicites : [],
+    axeDifferenciant: parsed.axeDifferenciant ?? "",
     syntheseAnnonce: parsed.syntheseAnnonce ?? "",
-    aVerifier: Array.isArray(parsed.aVerifier) ? parsed.aVerifier : [],
+    astuces: Array.isArray(parsed.astuces) ? parsed.astuces : [],
     pitch: parsed.pitch ?? "",
     pointsForts: Array.isArray(parsed.pointsForts) ? parsed.pointsForts : [],
     questionsProbables: Array.isArray(parsed.questionsProbables) ? parsed.questionsProbables : [],
@@ -135,11 +143,16 @@ function generatePlaceholderPrep(params: GenerateInterviewPrepParams): Interview
   const { company, role, firstName } = params;
 
   return {
-    syntheseAnnonce: `L'entreprise ${company} recherche un profil pour le poste de ${role}, avec l'envie de trouver quelqu'un de motivé et capable de monter en compétences rapidement en alternance.`,
-    aVerifier: [
-      `Le site web de ${company} : activité, valeurs, actualités récentes.`,
-      `La page LinkedIn de ${company} : publications récentes, taille de l'équipe.`,
-      `Le nom de la personne qui vous reçoit, si vous l'avez, pour personnaliser vos échanges.`,
+    besoinsImplicites: [
+      `« ${role} chez ${company} » → sans plus de détails, misez sur ce qui est toujours implicite en alternance : la capacité à apprendre vite et à être autonome rapidement, même sans expérience complète du poste.`,
+      "Un poste en alternance sous-entend presque toujours une vraie disponibilité et un engagement dans la durée — soyez prêt(e) à le confirmer clairement.",
+    ],
+    axeDifferenciant: `Mettez en avant ce qui, dans votre parcours, montre concrètement que vous savez apprendre vite et vous adapter — c'est souvent ce qui compte le plus pour un∙e recruteur∙se en alternance, plus que l'expérience exacte du poste.`,
+    syntheseAnnonce: `Le poste de ${role} chez ${company} implique très probablement un vrai apprentissage sur le terrain, encadré par une équipe.`,
+    astuces: [
+      `Allez sur le site de ${company} et identifiez 2-3 clients ou projets phares que vous pourrez citer.`,
+      `Regardez leurs réseaux sociaux (LinkedIn en priorité) pour repérer le ton de l'entreprise et ses actualités récentes.`,
+      "Préparez un exemple concret et chiffré d'une situation où vous avez dû apprendre vite.",
     ],
     pitch: `Bonjour, je m'appelle ${firstName || "..."}. Je recherche actuellement une alternance en ${role}, et votre offre chez ${company} correspond exactement à ce que je cherche à développer. J'ai hâte de vous en dire plus sur mon parcours et sur ce que je peux apporter à votre équipe.`,
     pointsForts: [
