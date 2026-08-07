@@ -10,6 +10,7 @@ const links = [
   { href: "/dashboard/applications", label: "Mes candidatures", icon: TableIcon },
   { href: "/dashboard/offers", label: "Offres d'alternance", icon: SearchIcon },
   { href: "/dashboard/messages", label: "Générateur IA", icon: SparkleIcon },
+  { href: "/dashboard/interview-prep", label: "Préparation entretien", icon: MicIcon },
   { href: "/dashboard/match-score", label: "Score de correspondance", icon: TargetIcon },
   { href: "/dashboard/offer-check", label: "Vérifier une offre", icon: ShieldIcon },
   { href: "/dashboard/resources", label: "Ressources", icon: BookIcon },
@@ -123,6 +124,14 @@ function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
       <circle cx="11" cy="11" r="7" />
       <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+function MicIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" strokeLinecap="round" />
     </svg>
   );
 }
