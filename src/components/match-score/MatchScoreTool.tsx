@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Label, Textarea, Select } from "@/components/ui/Form";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { AiLoadingState } from "@/components/ui/AiLoadingState";
 import { cn } from "@/lib/utils";
 import type { Application } from "@/lib/types";
 
@@ -121,7 +122,16 @@ export function MatchScoreTool({ cvSummary, applications, initialApplicationId }
 
         {matchError && <p className="mt-3 rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger">{matchError}</p>}
 
-        {matchResult && (
+        {matching && (
+          <div className="mt-6">
+            <AiLoadingState
+              message="Patientez quelques secondes, on calcule votre score de correspondance..."
+              steps={["Lecture de votre CV...", "Analyse de l'offre...", "Comparaison des compétences..."]}
+            />
+          </div>
+        )}
+
+        {matchResult && !matching && (
           <div className="mt-6 rounded-2xl border border-line bg-paper/60 p-5">
             <div className="flex items-center gap-3">
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-line">

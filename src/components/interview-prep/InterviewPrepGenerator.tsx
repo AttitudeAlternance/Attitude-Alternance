@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Label, Select } from "@/components/ui/Form";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { AiLoadingState } from "@/components/ui/AiLoadingState";
 import type { Application, Profile } from "@/lib/types";
 import type { InterviewPrep } from "@/lib/ai/generateInterviewPrep";
 
@@ -135,7 +136,19 @@ export function InterviewPrepGenerator({ profile, applications }: InterviewPrepG
         </Button>
       </Card>
 
-      {prep && selectedApp && (
+      {loading && selectedApp && (
+        <AiLoadingState
+          message={`Patientez quelques secondes, on prépare votre entretien chez ${selectedApp.company}...`}
+          steps={[
+            "Lecture de l'annonce...",
+            "Analyse de votre profil...",
+            "Préparation des questions probables...",
+            "Finalisation du dossier...",
+          ]}
+        />
+      )}
+
+      {prep && selectedApp && !loading && (
         <div className="space-y-4">
           {!usedRealAi && (
             <p className="rounded-lg bg-warn-50 px-3 py-2 text-xs text-warn">

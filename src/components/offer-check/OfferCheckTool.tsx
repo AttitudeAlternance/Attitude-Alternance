@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea, Select } from "@/components/ui/Form";
+import { AiLoadingState } from "@/components/ui/AiLoadingState";
 import { cn } from "@/lib/utils";
 import type { Application } from "@/lib/types";
 
@@ -161,7 +162,16 @@ export function OfferCheckTool({ applications, initialApplicationId }: OfferChec
 
         {analyzeError && <p className="mt-3 rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger">{analyzeError}</p>}
 
-        {result && (
+        {analyzing && (
+          <div className="mt-6">
+            <AiLoadingState
+              message="Patientez quelques secondes, on analyse cette offre..."
+              steps={["Lecture du texte...", "Recherche des signaux d'alerte...", "Calcul du score de risque..."]}
+            />
+          </div>
+        )}
+
+        {result && !analyzing && (
           <div className="mt-6 rounded-2xl border border-line bg-paper/60 p-5">
             <div className="flex items-center gap-3">
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-line">

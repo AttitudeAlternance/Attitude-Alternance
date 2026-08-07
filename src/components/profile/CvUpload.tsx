@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { AiLoadingState } from "@/components/ui/AiLoadingState";
 import { formatDate } from "@/lib/utils";
 
 interface CvUploadProps {
@@ -103,6 +104,15 @@ export function CvUpload({ initialSummary, initialUploadedAt }: CvUploadProps) {
       </label>
 
       {error && <p className="mt-3 rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger">{error}</p>}
+
+      {loading && (
+        <div className="mt-4">
+          <AiLoadingState
+            message="Patientez quelques secondes, on lit votre CV..."
+            steps={["Extraction du texte...", "Identification de vos compétences...", "Rédaction du résumé..."]}
+          />
+        </div>
+      )}
 
       {summary && !loading && (
         <div className="mt-4 rounded-xl border border-line bg-paper/60 p-4">

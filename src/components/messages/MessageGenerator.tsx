@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea, Select } from "@/components/ui/Form";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { AiLoadingState } from "@/components/ui/AiLoadingState";
 import { cn } from "@/lib/utils";
 import {
   MESSAGE_TYPE_LABELS,
@@ -274,7 +275,16 @@ export function MessageGenerator({
           </Button>
         </form>
 
-        {result && (
+        {loading && (
+          <div className="mt-6">
+            <AiLoadingState
+              message="Patientez quelques secondes, on rédige votre message..."
+              steps={["Lecture de l'annonce...", "Adaptation à votre profil...", "Choix du bon ton...", "Dernière relecture..."]}
+            />
+          </div>
+        )}
+
+        {result && !loading && (
           <div className="mt-6 rounded-2xl border border-line bg-paper/60 p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <span className="text-sm font-semibold text-ink">Message généré</span>
