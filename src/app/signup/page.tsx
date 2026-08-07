@@ -17,17 +17,21 @@ export default function SignupPage() {
   const [ageRange, setAgeRange] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [signupSource, setSignupSource] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
-  // Lit le code de parrainage depuis l'URL (?ref=CODE), sans avoir besoin de useSearchParams
+  // Lit le code de parrainage (?ref=CODE) et l'origine éventuelle (?src=...) depuis l'URL,
+  // sans avoir besoin de useSearchParams
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("ref");
     if (ref) setReferralCode(ref);
+    const src = params.get("src");
+    if (src) setSignupSource(src);
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -55,12 +59,14 @@ export default function SignupPage() {
       return;
     }
 
-    // Enregistre la date d'acceptation des CGU et la tranche d'âge (facultative) sur le profil
+    // Enregistre la date d'acceptation des CGU, la tranche d'âge (facultative) et l'origine
+    // de l'inscription (facultative, ex. ?src=linkedin-lancement) sur le profil
     if (data.user) {
       await supabase.from("profiles").upsert({
         id: data.user.id,
         terms_accepted_at: new Date().toISOString(),
         age_range: ageRange || null,
+        signup_source: signupSource,
       });
     }
 

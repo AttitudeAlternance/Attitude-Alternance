@@ -39,7 +39,7 @@ export default async function AdminPage() {
   ] = await Promise.all([
     admin
       .from("profiles")
-      .select("id, plan, created_at, bonus_applications, referred_by, waitlist_joined_at, age_range, target_sector, email, first_name, last_name")
+      .select("id, plan, created_at, bonus_applications, referred_by, waitlist_joined_at, age_range, target_sector, email, first_name, last_name, signup_source")
       .neq("id", myUserId)
       .order("created_at", { ascending: false }),
     admin
@@ -84,6 +84,7 @@ export default async function AdminPage() {
     applications: applicationCountByUser[p.id] ?? 0,
     messages: messageCountByUser[p.id] ?? 0,
     createdAt: p.created_at as string,
+    signupSource: p.signup_source as string | null,
   }));
 
   const ageBreakdown = allProfiles.reduce<Record<string, number>>((acc, p) => {

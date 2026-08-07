@@ -15,6 +15,7 @@ interface StudentRow {
   applications: number;
   messages: number;
   createdAt: string;
+  signupSource: string | null;
 }
 
 interface EmailTemplate {
@@ -144,7 +145,7 @@ export function AdminStudentsPanel({ students }: { students: StudentRow[] }) {
           Réservé à vous seul. Cochez des étudiants pour leur envoyer un email groupé dans le module ci-dessous.
         </p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left text-sm">
+          <table className="w-full min-w-[760px] text-left text-sm">
             <thead>
               <tr className="border-b border-line text-xs font-medium uppercase tracking-wide text-muted">
                 <th className="py-2 pr-4">
@@ -159,6 +160,7 @@ export function AdminStudentsPanel({ students }: { students: StudentRow[] }) {
                 <th className="py-2 pr-4">Nom</th>
                 <th className="py-2 pr-4">Email</th>
                 <th className="py-2 pr-4">Plan</th>
+                <th className="py-2 pr-4">Source</th>
                 <th className="py-2 pr-4">Candidatures</th>
                 <th className="py-2 pr-4">Messages</th>
                 <th className="py-2 pr-4">Inscrit le</th>
@@ -190,6 +192,15 @@ export function AdminStudentsPanel({ students }: { students: StudentRow[] }) {
                     >
                       {s.plan === "premium" ? "Étudiant+" : "Gratuit"}
                     </span>
+                  </td>
+                  <td className="py-2 pr-4">
+                    {s.signupSource ? (
+                      <span className="rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-600">
+                        {s.signupSource}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted">—</span>
+                    )}
                   </td>
                   <td className="py-2 pr-4 text-ink/80">{s.applications}</td>
                   <td className="py-2 pr-4 text-ink/80">{s.messages}</td>
