@@ -67,13 +67,18 @@ export function InterviewPrepGenerator({ profile, applications }: InterviewPrepG
       `PRÉPARATION D'ENTRETIEN — ${selectedApp.role} chez ${selectedApp.company}`,
       "",
       "CE QUE L'ANNONCE RÉVÈLE VRAIMENT",
-      ...prep.besoinsImplicites.map((item) => `- ${item}`),
+      ...prep.besoinsImplicites.map((item) =>
+        item.extrait ? `- « ${item.extrait} » → ${item.interpretation}` : `- ${item.interpretation}`
+      ),
       "",
       "VOTRE AXE DIFFÉRENCIANT",
       prep.axeDifferenciant,
       "",
       "LE POSTE EN BREF",
       prep.syntheseAnnonce,
+      "",
+      "POINTS DE VIGILANCE À ANTICIPER",
+      ...prep.pointsDeVigilance.map((item) => `- Écart : ${item.ecart}\n  Comment y répondre : ${item.conseil}`),
       "",
       "VOTRE PITCH",
       prep.pitch,
@@ -174,10 +179,13 @@ export function InterviewPrepGenerator({ profile, applications }: InterviewPrepG
 
           <Card>
             <h3 className="font-display text-sm font-semibold text-ink">🔎 Ce que l&apos;annonce révèle vraiment</h3>
-            <ul className="mt-2 space-y-2 text-sm text-ink/85">
+            <ul className="mt-2 space-y-3 text-sm text-ink/85">
               {prep.besoinsImplicites.map((item, i) => (
                 <li key={i} className="border-l-2 border-primary-200 pl-3">
-                  {item}
+                  {item.extrait && (
+                    <p className="italic text-ink/60">&laquo; {item.extrait} &raquo;</p>
+                  )}
+                  <p className={item.extrait ? "mt-1" : ""}>{item.interpretation}</p>
                 </li>
               ))}
             </ul>
@@ -192,6 +200,20 @@ export function InterviewPrepGenerator({ profile, applications }: InterviewPrepG
             <h3 className="font-display text-sm font-semibold text-ink">🏢 Le poste en bref</h3>
             <p className="mt-2 text-sm text-ink/85">{prep.syntheseAnnonce}</p>
           </Card>
+
+          {prep.pointsDeVigilance.length > 0 && (
+            <div className="rounded-2xl border border-warn/40 bg-warn-50 p-6 shadow-card">
+              <h3 className="font-display text-sm font-semibold text-ink">⚠️ Points de vigilance à anticiper</h3>
+              <ul className="mt-2 space-y-3 text-sm text-ink/85">
+                {prep.pointsDeVigilance.map((item, i) => (
+                  <li key={i}>
+                    <p className="font-medium text-ink">{item.ecart}</p>
+                    <p className="mt-1 text-ink/75">→ {item.conseil}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <Card>
             <h3 className="font-display text-sm font-semibold text-ink">🎤 Votre pitch</h3>
