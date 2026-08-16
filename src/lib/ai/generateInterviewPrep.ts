@@ -163,7 +163,12 @@ async function generateWithClaude(params: GenerateInterviewPrepParams, apiKey: s
   });
 
   if (!response.ok) {
-    throw new Error(`Anthropic API error: ${response.status}`);
+    // Diagnostic complet (statut + corps de la réponse) pour pouvoir identifier la vraie
+    // cause dans les logs Vercel : clé invalide (401), quota/limite de débit dépassé (429),
+    // requête mal formée (400), panne côté Anthropic (5xx)... plutôt qu'un simple "IA non
+    // configurée" qui masque la vraie raison quand la clé EST bien configurée.
+    const errorBody = await response.text().catch(() => "");
+    throw new Error(`Anthropic API error: ${response.status} — ${errorBody.slice(0, 500)}`);
   }
 
   const data = await response.json();
