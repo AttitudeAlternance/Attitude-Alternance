@@ -1,12 +1,14 @@
 // Correspondance entre les secteurs proposés à l'étudiant (langage simple) et les codes ROME
-// officiels attendus par l'API "La bonne alternance". Les codes Commerce & Vente et Marketing
-// ont été réélargis le 16/08/2026 : la liste initiale (3 codes pour "Commerce & Vente", 1 seul
-// pour "Marketing") était bien trop étroite et faisait manquer de vraies offres pourtant
-// visibles sur le site officiel La bonne alternance (ex : "Chef de Secteur GMS", relevant en
-// réalité de D1502/D1509 — management de rayon/département en grande distribution — absents de
-// l'ancienne liste). Vérifiés individuellement via les fiches ROME officielles. Les autres
-// secteurs (Communication, RH, Digital, Comptabilité, Administratif, Immobilier) n'ont pas
-// encore été réaudités de la même façon et méritent probablement le même élargissement.
+// officiels attendus par l'API "La bonne alternance". Élargie au maximum le 16/08/2026 pour
+// TOUS les secteurs : la liste initiale ne comptait que 1 à 3 codes par secteur et faisait
+// manquer de vraies offres pourtant visibles sur le site officiel La bonne alternance (ex :
+// "Chef de Secteur GMS", relevant en réalité de D1502/D1509 — management de rayon/département
+// en grande distribution — absent de l'ancienne liste "Commerce & Vente"). Chaque code a été
+// vérifié individuellement via les fiches ROME officielles (France Travail / Mission
+// Apprentissage) plutôt que deviné — voir sources dans la conversation du 16/08/2026. Volontai-
+// rement exclus : les codes trop spécialisés/manuels hors du profil visé par nos étudiants
+// (ex : M1609 secrétariat médical, D1101-D1107 métiers de bouche, E12xx/E13xx photo-labo et
+// impression industrielle).
 export interface SectorOption {
   key: string;
   label: string;
@@ -18,6 +20,7 @@ export const SECTOR_OPTIONS: SectorOption[] = [
     key: "commerce",
     label: "Commerce & Vente",
     romes: [
+      "D1301", // Management de magasin de détail
       "D1401", // Assistanat commercial
       "D1402", // Relation commerciale grands comptes et entreprises
       "D1403", // Relation commerciale auprès de particuliers
@@ -27,28 +30,99 @@ export const SECTOR_OPTIONS: SectorOption[] = [
       "D1408", // Téléconseil et télévente
       "D1501", // Animation de vente
       "D1502", // Management/gestion de rayon produits alimentaires
+      "D1504", // Direction de magasin de grande distribution
       "D1506", // Marchandisage
       "D1507", // Mise en rayon libre-service
       "D1509", // Management de département en grande distribution
-      "D1301", // Management de magasin de détail
+      "D1106", // Vente en alimentation
     ],
   },
   {
     key: "marketing",
     label: "Marketing",
     romes: [
-      "M1705", // Marketing
+      "M1701", // Administration des ventes
+      "M1702", // Analyse de tendance
       "M1703", // Management et gestion de produit
+      "M1705", // Marketing
       "M1706", // Promotion des ventes
       "M1707", // Stratégie commerciale
     ],
   },
-  { key: "communication", label: "Communication", romes: ["E1103"] },
-  { key: "rh", label: "Ressources Humaines", romes: ["M1501", "M1502"] },
-  { key: "digital", label: "Informatique & Digital", romes: ["M1805", "M1806"] },
-  { key: "compta", label: "Comptabilité & Gestion", romes: ["M1203", "M1204"] },
-  { key: "admin", label: "Administratif & Secrétariat", romes: ["M1601", "M1607"] },
-  { key: "immobilier", label: "Immobilier", romes: ["C1503", "C1504"] },
+  {
+    key: "communication",
+    label: "Communication",
+    romes: [
+      "E1101", // Animation de site multimédia
+      "E1102", // Écriture d'ouvrages, de livres
+      "E1103", // Communication
+      "E1104", // Conception de contenus multimédias
+      "E1105", // Coordination d'édition
+      "E1106", // Journalisme et information média
+      "E1107", // Organisation d'événementiel
+      "E1108", // Traduction, interprétariat
+      "E1401", // Développement et promotion publicitaire
+      "E1402", // Élaboration de plan média
+    ],
+  },
+  {
+    key: "rh",
+    label: "Ressources Humaines",
+    romes: [
+      "M1501", // Assistanat en ressources humaines
+      "M1502", // Développement des ressources humaines
+      "M1503", // Management des ressources humaines
+    ],
+  },
+  {
+    key: "digital",
+    label: "Informatique & Digital",
+    romes: [
+      "M1801", // Administration de systèmes d'information
+      "M1802", // Conseil et maîtrise d'ouvrage en systèmes d'information
+      "M1803", // Direction des systèmes d'information
+      "M1804", // Études et développement de réseaux de télécoms
+      "M1805", // Études et développement informatique
+      "M1806", // Expertise et support technique en systèmes d'information
+      "M1810", // Production et exploitation de systèmes d'information
+    ],
+  },
+  {
+    key: "compta",
+    label: "Comptabilité & Gestion",
+    romes: [
+      "M1201", // Analyse et ingénierie financière
+      "M1202", // Audit et contrôle comptables et financiers
+      "M1203", // Comptabilité
+      "M1204", // Contrôle de gestion
+      "M1205", // Direction administrative et financière
+      "M1206", // Management de groupe ou de service comptable
+      "M1207", // Trésorerie et financement
+    ],
+  },
+  {
+    key: "admin",
+    label: "Administratif & Secrétariat",
+    romes: [
+      "M1601", // Accueil et renseignements
+      "M1602", // Opérations administratives
+      "M1604", // Assistanat de direction
+      "M1605", // Assistanat technique et administratif
+      "M1606", // Saisie de données
+      "M1607", // Secrétariat
+      "M1608", // Secrétariat comptable
+    ],
+  },
+  {
+    key: "immobilier",
+    label: "Immobilier",
+    romes: [
+      "C1501", // Gérance immobilière
+      "C1502", // Gestion locative immobilière
+      "C1503", // Management de projet immobilier
+      "C1504", // Transaction immobilière
+    ],
+  },
 ];
 
 // Traduit une liste de clés de secteurs (ex: ["commerce", "marketing"]) en une liste de codes
