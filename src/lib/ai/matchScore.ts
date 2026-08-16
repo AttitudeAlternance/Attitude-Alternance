@@ -58,7 +58,21 @@ export async function computeMatchScore(params: {
               usedRealAi: true,
             };
           }
+          // Réponse 2xx mais JSON inattendu (pas de champ "score" numérique) — à logger quand
+          // même, sinon ce cas reste totalement invisible dans les logs.
+          console.error("Score de correspondance : réponse Anthropic 2xx mais JSON inattendu :", cleaned.slice(0, 500));
+        } else {
+          console.error("Score de correspondance : réponse Anthropic 2xx sans bloc de texte exploitable.");
         }
+      } else {
+        // Avant ce correctif, un échec ici (clé invalide, quota dépassé, requête mal formée...)
+        // ne générait AUCUN log : le repli local se déclenchait en silence, rendant le diagnostic
+        // impossible depuis Vercel. On journalise désormais systématiquement statut + corps.
+        const errorBody = await response.text().catch(() => "");
+        console.error(
+          `Erreur score de correspondance via Anthropic (statut ${response.status}), repli sur l'estimation locale :`,
+          errorBody.slice(0, 500)
+        );
       }
     } catch (err) {
       console.error("Erreur score de correspondance via Anthropic, repli sur l'estimation locale :", err);
