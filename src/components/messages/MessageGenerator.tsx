@@ -300,7 +300,7 @@ export function MessageGenerator({
             <pre className="whitespace-pre-wrap font-body text-sm text-ink/90">{result}</pre>
             {!usedRealAi && (
               <p className="mt-3 text-xs text-warn">
-                Message généré en mode simplifié (aucune clé IA configurée) — connectez ANTHROPIC_API_KEY pour une rédaction plus naturelle.
+                Message généré en mode simplifié — l&apos;analyse IA n&apos;a pas pu être utilisée cette fois-ci.
               </p>
             )}
           </div>
