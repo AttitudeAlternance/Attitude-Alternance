@@ -229,8 +229,8 @@ export function InterviewPrepGenerator({ profile, applications }: InterviewPrepG
         <div className="space-y-4">
           {!usedRealAi && (
             <p className="rounded-lg bg-warn-50 px-3 py-2 text-xs text-warn">
-              Généré avec le mode de secours (IA non configurée) — le contenu est plus générique qu&apos;à
-              l&apos;habitude.
+              Généré en mode simplifié — l&apos;analyse IA n&apos;a pas pu être utilisée cette fois-ci, le contenu
+              est donc plus générique qu&apos;à l&apos;habitude.
             </p>
           )}
 
