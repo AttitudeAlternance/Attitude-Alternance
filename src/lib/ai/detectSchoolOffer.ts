@@ -62,7 +62,21 @@ export async function detectSchoolOfferWithAi(text: string, offerUrl?: string | 
               usedRealAi: true,
             };
           }
+          // Réponse 2xx mais JSON inattendu (pas de champ "percentage" numérique) — à logger
+          // quand même, sinon ce cas reste totalement invisible dans les logs.
+          console.error("Détection offre-école : réponse Anthropic 2xx mais JSON inattendu :", cleaned.slice(0, 500));
+        } else {
+          console.error("Détection offre-école : réponse Anthropic 2xx sans bloc de texte exploitable.");
         }
+      } else {
+        // Avant ce correctif, un échec ici (clé invalide, quota dépassé, requête mal formée...)
+        // ne générait AUCUN log : le repli sur l'heuristique se déclenchait en silence, rendant
+        // le diagnostic impossible depuis Vercel. On journalise désormais statut + corps.
+        const errorBody = await response.text().catch(() => "");
+        console.error(
+          `Erreur détection offre-école via Anthropic (statut ${response.status}), repli sur l'heuristique :`,
+          errorBody.slice(0, 500)
+        );
       }
     } catch (err) {
       console.error("Erreur détection offre-école via Anthropic, repli sur l'heuristique :", err);
