@@ -120,7 +120,12 @@ async function summarizeCv(text: string): Promise<{ summary: string; usedRealAi:
         }),
       });
 
-      if (!response.ok) throw new Error(`Anthropic API error: ${response.status}`);
+      if (!response.ok) {
+        // Diagnostic complet (statut + corps) pour identifier la vraie cause dans les logs
+        // Vercel (clé invalide, quota dépassé, requête mal formée, panne Anthropic...).
+        const errorBody = await response.text().catch(() => "");
+        throw new Error(`Anthropic API error: ${response.status} — ${errorBody.slice(0, 500)}`);
+      }
 
       const data = await response.json();
       const summary = data?.content?.find((block: { type: string }) => block.type === "text")?.text?.trim();
@@ -133,7 +138,7 @@ async function summarizeCv(text: string): Promise<{ summary: string; usedRealAi:
   // Repli sans IA : on garde un extrait propre du texte brut, pas d'analyse réelle.
   const fallback = text.slice(0, 500).trim();
   return {
-    summary: `${fallback}${text.length > 500 ? "…" : ""}\n\n(Résumé automatique non disponible — connectez une clé ANTHROPIC_API_KEY pour une analyse plus fine du profil.)`,
+    summary: `${fallback}${text.length > 500 ? "…" : ""}\n\n(Résumé automatique simplifié — l'analyse IA n'a pas pu être utilisée cette fois-ci.)`,
     usedRealAi: false,
   };
 }
