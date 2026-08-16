@@ -156,7 +156,15 @@ async function generateWithClaude(params: GenerateInterviewPrepParams, apiKey: s
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 2800,
+      // Relevé à 6000 (au lieu de 2800 à l'origine) : cause confirmée en production le
+      // 16/08/2026 via les logs Vercel ("Unterminated string in JSON at position 9130") — la
+      // réponse de Claude était coupée en plein JSON en heurtant la limite de 2800 tokens, sur
+      // une préparation d'entretien avec annonce détaillée + CV à croiser (le cas le plus
+      // riche, donc le plus consommateur). Le JSON attendu comporte 8-9 sections avec
+      // plusieurs listes, et une réponse en français consomme davantage de tokens qu'en
+      // anglais à longueur égale. 6000 laisse une marge large plutôt que juste suffisante,
+      // pour éviter une récidive sur un cas encore plus riche (CV long + annonce longue).
+      max_tokens: 6000,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: buildPrompt(params) }],
     }),
@@ -177,8 +185,31 @@ async function generateWithClaude(params: GenerateInterviewPrepParams, apiKey: s
 
   // Filet de sécurité : au cas où l'IA ajouterait quand même des balises ```json
   // malgré la consigne, on les retire avant de parser.
-  const cleaned = text.trim().replace(/^```json\s*/i, "").replace(/```$/, "").trim();
-  const parsed = JSON.parse(cleaned);
+  const withoutFences = text.trim().replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+
+  // Deuxième filet de sécurité : si Claude a malgré tout ajouté une phrase avant ou après le
+  // JSON (ex. un commentaire d'intro), on isole la portion entre la première "{" et la dernière
+  // "}" plutôt que de faire échouer tout le parsing sur un texte qui n'est pas du JSON pur.
+  const firstBrace = withoutFences.indexOf("{");
+  const lastBrace = withoutFences.lastIndexOf("}");
+  const jsonCandidate =
+    firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace
+      ? withoutFences.slice(firstBrace, lastBrace + 1)
+      : withoutFences;
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(jsonCandidate);
+  } catch (parseErr) {
+    // Essentiel pour diagnostiquer une prochaine panne : sans ce log, on sait qu'un JSON.parse a
+    // échoué mais pas DU TOUT ce que Claude a réellement répondu — impossible de distinguer une
+    // réponse tronquée (max_tokens atteint), un format inattendu, ou autre chose.
+    console.error(
+      "JSON invalide renvoyé par Claude pour la préparation d'entretien — texte reçu :",
+      withoutFences.slice(0, 1000)
+    );
+    throw parseErr;
+  }
 
   const besoinsImplicites: RevelationAnnonce[] = Array.isArray(parsed.besoinsImplicites)
     ? parsed.besoinsImplicites
