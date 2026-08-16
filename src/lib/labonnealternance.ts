@@ -93,7 +93,20 @@ export async function searchAlternanceOffers({
     recipientId: rec?.apply?.recipient_id ?? null,
   }));
 
-  return [...jobResults, ...recruiterResults];
+  // Tri des vraies offres par date de publication décroissante (les plus récentes en premier).
+  // Les offres sans date connue (rare, mais possible selon les entreprises) sont reléguées à la
+  // fin de ce groupe plutôt que de casser le tri. Les candidatures spontanées suggérées
+  // ("recruteurs", sans date de publication puisqu'il n'y a pas d'offre) restent affichées après,
+  // comme avant — ce sont des suggestions, pas des offres datées, ça n'a pas de sens de les mêler
+  // au tri chronologique.
+  const sortedJobResults = [...jobResults].sort((a, b) => {
+    if (!a.publicationDate && !b.publicationDate) return 0;
+    if (!a.publicationDate) return 1;
+    if (!b.publicationDate) return -1;
+    return new Date(b.publicationDate).getTime() - new Date(a.publicationDate).getTime();
+  });
+
+  return [...sortedJobResults, ...recruiterResults];
 }
 
 export interface SubmitApplicationParams {
