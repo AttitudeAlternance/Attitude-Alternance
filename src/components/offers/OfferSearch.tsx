@@ -10,6 +10,13 @@ import { geocodeCity, type GeocodedLocation } from "@/lib/geocode";
 import { createClient } from "@/lib/supabase/client";
 import type { OfferResult } from "@/lib/labonnealternance";
 
+// Désactivé temporairement : l'endpoint job/v1/apply de La bonne alternance renvoie une 403
+// ("Vous n'êtes pas autorisé à accéder à cette ressource") — notre clé API n'a pas encore
+// l'habilitation nécessaire pour envoyer des candidatures pour le compte des étudiants.
+// Demande envoyée à La bonne alternance le 16/08/2026. Repasser à `true` dès que l'accès est
+// confirmé — tout le reste du code (bouton, appel API, route /api/offers/apply) est inchangé.
+const ONE_CLICK_APPLY_ENABLED = false;
+
 interface OfferSearchProps {
   userId: string;
   initialCity: string;
@@ -282,7 +289,7 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
                         </a>
                       )}
 
-                      {offer.recipientId ? (
+                      {offer.recipientId && ONE_CLICK_APPLY_ENABLED ? (
                         <Button
                           size="sm"
                           variant="accent"
