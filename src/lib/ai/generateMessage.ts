@@ -67,7 +67,11 @@ async function generateWithClaude(params: GenerateMessageParams, apiKey: string)
   });
 
   if (!response.ok) {
-    throw new Error(`Anthropic API error: ${response.status}`);
+    // Diagnostic complet (statut + corps) pour identifier la vraie cause dans les logs Vercel
+    // (clé invalide, quota dépassé, requête mal formée, panne Anthropic...) plutôt qu'un simple
+    // repli silencieux qui masque la raison réelle.
+    const errorBody = await response.text().catch(() => "");
+    throw new Error(`Anthropic API error: ${response.status} — ${errorBody.slice(0, 500)}`);
   }
 
   const data = await response.json();
