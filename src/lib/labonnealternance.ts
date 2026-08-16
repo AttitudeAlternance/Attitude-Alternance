@@ -23,6 +23,7 @@ export interface OfferResult {
   applyUrl: string | null;
   isSpontaneous: boolean;
   publicationDate: string | null;
+  recipientId: string | null;
 }
 
 export async function searchAlternanceOffers({
@@ -74,6 +75,7 @@ export async function searchAlternanceOffers({
     applyUrl: job?.apply?.url ?? null,
     isSpontaneous: false,
     publicationDate: job?.offer?.publication?.creation ?? null,
+    recipientId: job?.apply?.recipient_id ?? null,
   }));
 
   // Les "recruteurs" sont des entreprises à fort potentiel n'ayant publié aucune offre : la
@@ -88,8 +90,60 @@ export async function searchAlternanceOffers({
     applyUrl: rec?.apply?.url ?? null,
     isSpontaneous: true,
     publicationDate: null,
+    recipientId: rec?.apply?.recipient_id ?? null,
   }));
 
   return [...jobResults, ...recruiterResults];
+}
+
+export interface SubmitApplicationParams {
+  recipientId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  cvFileName: string;
+  cvBase64: string;
+  message?: string;
+}
+
+/**
+ * Envoie une candidature directement via l'API La bonne alternance (POST /job/v1/apply) —
+ * l'étudiant ne quitte jamais le site, c'est l'API qui transmet le CV et le message au
+ * recruteur par email. Ne fonctionne que pour les offres dont recipientId n'est pas null.
+ */
+export async function submitApplication(params: SubmitApplicationParams): Promise<void> {
+  const apiKey = process.env.LBA_API_KEY;
+  if (!apiKey) {
+    throw new Error("Clé API La bonne alternance manquante (LBA_API_KEY).");
+  }
+
+  const response = await fetch("https://api.apprentissage.beta.gouv.fr/api/job/v1/apply", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      applicant_first_name: params.firstName,
+      applicant_last_name: params.lastName,
+      applicant_email: params.email,
+      applicant_phone: params.phone,
+      applicant_attachment_name: params.cvFileName,
+      applicant_attachment_content: params.cvBase64,
+      recipient_id: params.recipientId,
+      applicant_message: params.message ?? null,
+    }),
+    cache: "no-store",
+  });
+
+  const contentType = response.headers.get("content-type") ?? "";
+  const rawBody = await response.text();
+
+  if (!response.ok) {
+    throw new Error(
+      `Erreur lors de l'envoi de la candidature (statut ${response.status}, type "${contentType}") : ${rawBody.slice(0, 400)}`
+    );
+  }
 }
 

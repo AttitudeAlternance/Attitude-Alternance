@@ -70,6 +70,7 @@ export interface Profile {
   search_radius: number;
   notify_new_offers: boolean;
   signup_source: string | null;
+  phone: string | null;
   target_role: string | null;
   linkedin_url: string | null;
   cv_url: string | null;

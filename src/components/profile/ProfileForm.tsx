@@ -18,6 +18,7 @@ type ProfileFields = Pick<
   Profile,
   | "first_name"
   | "last_name"
+  | "phone"
   | "formation"
   | "target_city"
   | "target_sector"
@@ -30,6 +31,7 @@ type ProfileFields = Pick<
 const fieldLabels: Record<keyof ProfileFields, string> = {
   first_name: "Prénom",
   last_name: "Nom",
+  phone: "Téléphone",
   formation: "Formation en cours",
   target_city: "Ville recherchée",
   target_sector: "Secteur recherché",
@@ -43,6 +45,7 @@ export function ProfileForm({ userId, email, initialProfile }: ProfileFormProps)
   const [values, setValues] = useState<ProfileFields>({
     first_name: initialProfile?.first_name ?? "",
     last_name: initialProfile?.last_name ?? "",
+    phone: initialProfile?.phone ?? "",
     formation: initialProfile?.formation ?? "",
     target_city: initialProfile?.target_city ?? "",
     target_sector: initialProfile?.target_sector ?? "",
@@ -118,6 +121,18 @@ export function ProfileForm({ userId, email, initialProfile }: ProfileFormProps)
               <Label htmlFor="last_name">{fieldLabels.last_name}</Label>
               <Input id="last_name" value={values.last_name ?? ""} onChange={(e) => update("last_name", e.target.value)} />
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="phone">{fieldLabels.phone}</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={values.phone ?? ""}
+              onChange={(e) => update("phone", e.target.value)}
+              placeholder="Ex : 06 12 34 56 78"
+            />
+            <FieldHint>Nécessaire uniquement pour candidater en un clic depuis la page « Offres d&apos;alternance ».</FieldHint>
           </div>
 
           <div>

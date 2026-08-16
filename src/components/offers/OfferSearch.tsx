@@ -30,6 +30,8 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [applyStatus, setApplyStatus] = useState<Record<string, "loading" | "success" | "error">>({});
+  const [applyError, setApplyError] = useState<Record<string, string>>({});
   const supabase = createClient();
 
   function toggleSector(key: string) {
@@ -120,6 +122,39 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
     return `/dashboard/applications?${params.toString()}`;
   }
 
+  async function handleOneClickApply(offer: OfferResult) {
+    if (!offer.recipientId) return;
+
+    setApplyStatus((prev) => ({ ...prev, [offer.id]: "loading" }));
+    setApplyError((prev) => ({ ...prev, [offer.id]: "" }));
+
+    try {
+      const res = await fetch("/api/offers/apply", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          recipientId: offer.recipientId,
+          company: offer.company,
+          role: offer.title,
+          applyUrl: offer.applyUrl,
+          jobDescription: offer.description,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setApplyStatus((prev) => ({ ...prev, [offer.id]: "error" }));
+        setApplyError((prev) => ({ ...prev, [offer.id]: data.error || "Échec de l'envoi." }));
+        return;
+      }
+
+      setApplyStatus((prev) => ({ ...prev, [offer.id]: "success" }));
+    } catch {
+      setApplyStatus((prev) => ({ ...prev, [offer.id]: "error" }));
+      setApplyError((prev) => ({ ...prev, [offer.id]: "Une erreur est survenue pendant l'envoi." }));
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -205,41 +240,73 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
           </p>
 
           <div className="space-y-3">
-            {offers.map((offer) => (
-              <Card key={offer.id}>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-display text-sm font-semibold text-ink">{offer.title}</p>
-                    <p className="mt-0.5 text-sm text-muted">
-                      {offer.company}
-                      {offer.city ? ` · ${offer.city}` : ""}
-                    </p>
-                    {offer.isSpontaneous && (
-                      <span className="mt-2 inline-block rounded-full bg-accent-50 px-2.5 py-1 text-xs font-medium text-accent-600">
-                        À fort potentiel — candidature spontanée conseillée
-                      </span>
-                    )}
+            {offers.map((offer) => {
+              const status = applyStatus[offer.id];
+              return (
+                <Card key={offer.id}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-display text-sm font-semibold text-ink">{offer.title}</p>
+                      <p className="mt-0.5 text-sm text-muted">
+                        {offer.company}
+                        {offer.city ? ` · ${offer.city}` : ""}
+                      </p>
+                      {offer.isSpontaneous && (
+                        <span className="mt-2 inline-block rounded-full bg-accent-50 px-2.5 py-1 text-xs font-medium text-accent-600">
+                          À fort potentiel — candidature spontanée conseillée
+                        </span>
+                      )}
+                      {status === "error" && (
+                        <p className="mt-2 text-xs text-danger">
+                          {applyError[offer.id]}
+                          {applyError[offer.id]?.includes("profil") && (
+                            <>
+                              {" "}
+                              <Link href="/dashboard/profile" className="underline">
+                                Compléter mon profil
+                              </Link>
+                            </>
+                          )}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-2">
+                      {offer.applyUrl && (
+                        <a
+                          href={offer.applyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          Voir l&apos;offre
+                        </a>
+                      )}
+
+                      {offer.recipientId ? (
+                        <Button
+                          size="sm"
+                          variant="accent"
+                          onClick={() => handleOneClickApply(offer)}
+                          disabled={status === "loading" || status === "success"}
+                        >
+                          {status === "success"
+                            ? "✓ Candidature envoyée"
+                            : status === "loading"
+                              ? "Envoi..."
+                              : "⚡ Postuler en 1 clic"}
+                        </Button>
+                      ) : (
+                        <Link href={buildAddUrl(offer)}>
+                          <Button size="sm" variant="secondary">
+                            + Ajouter à mes candidatures
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex flex-shrink-0 items-center gap-2">
-                    {offer.applyUrl && (
-                      <a
-                        href={offer.applyUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm font-medium text-primary hover:underline"
-                      >
-                        Voir l&apos;offre
-                      </a>
-                    )}
-                    <Link href={buildAddUrl(offer)}>
-                      <Button size="sm" variant="secondary">
-                        + Ajouter à mes candidatures
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}
