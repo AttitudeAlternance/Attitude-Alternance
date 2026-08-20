@@ -93,20 +93,58 @@ export async function searchAlternanceOffers({
     recipientId: rec?.apply?.recipient_id ?? null,
   }));
 
+  // Déduplication : constatée en production le 20/08/2026 via l'outil de diagnostic (~30% des
+  // offres reçues étaient des doublons exacts). Cause : quand une même offre correspond à
+  // PLUSIEURS des codes ROME envoyés (ex. "Vendeur en alternance" matche à la fois D1501 et
+  // D1507), l'API la renvoie une fois par code ROME concerné plutôt qu'une seule fois. Plus on
+  // envoie de codes ROME (et on vient justement de les élargir au maximum), plus ce phénomène
+  // est visible. On déduplique sur le couple (titre, entreprise) normalisé — volontairement
+  // strict (pas juste le titre) pour ne jamais fusionner deux offres réellement distinctes
+  // publiées par deux entités différentes du même groupe (ex. "Auchan Retail France" vs "Auchan
+  // Hypermarché SAS" sur un même intitulé de poste, observées toutes les deux en production).
+  function dedupeByTitleAndCompany(items: OfferResult[]): OfferResult[] {
+    const seen = new Set<string>();
+    const result: OfferResult[] = [];
+    for (const item of items) {
+      const key = `${item.title.trim().toLowerCase()}|${item.company.trim().toLowerCase()}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(item);
+    }
+    return result;
+  }
+
+  // Pour les candidatures spontanées suggérées, le titre est toujours identique ("Candidature
+  // spontanée suggérée") — la déduplication se fait donc uniquement sur l'entreprise.
+  function dedupeByCompanyOnly(items: OfferResult[]): OfferResult[] {
+    const seen = new Set<string>();
+    const result: OfferResult[] = [];
+    for (const item of items) {
+      const key = item.company.trim().toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(item);
+    }
+    return result;
+  }
+
+  const dedupedJobResults = dedupeByTitleAndCompany(jobResults);
+  const dedupedRecruiterResults = dedupeByCompanyOnly(recruiterResults);
+
   // Tri des vraies offres par date de publication décroissante (les plus récentes en premier).
   // Les offres sans date connue (rare, mais possible selon les entreprises) sont reléguées à la
   // fin de ce groupe plutôt que de casser le tri. Les candidatures spontanées suggérées
   // ("recruteurs", sans date de publication puisqu'il n'y a pas d'offre) restent affichées après,
   // comme avant — ce sont des suggestions, pas des offres datées, ça n'a pas de sens de les mêler
   // au tri chronologique.
-  const sortedJobResults = [...jobResults].sort((a, b) => {
+  const sortedJobResults = [...dedupedJobResults].sort((a, b) => {
     if (!a.publicationDate && !b.publicationDate) return 0;
     if (!a.publicationDate) return 1;
     if (!b.publicationDate) return -1;
     return new Date(b.publicationDate).getTime() - new Date(a.publicationDate).getTime();
   });
 
-  return [...sortedJobResults, ...recruiterResults];
+  return [...sortedJobResults, ...dedupedRecruiterResults];
 }
 
 export interface SubmitApplicationParams {
