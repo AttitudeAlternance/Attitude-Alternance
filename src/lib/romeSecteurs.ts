@@ -35,6 +35,15 @@ export const SECTOR_OPTIONS: SectorOption[] = [
       "D1507", // Mise en rayon libre-service
       "D1509", // Management de département en grande distribution
       "D1106", // Vente en alimentation
+      // Ajoutés le 20/08/2026 : famille "vente spécialisée par famille de produits", absente de
+      // la liste précédente. Manque confirmé en production via l'outil de diagnostic — des
+      // offres bien réelles ("Vendeur / Vendeuse en prêt-à-porter", "Vendeur de chaussures",
+      // "VENDEUR EN ALTERNANCE TABAC PRESSE") n'apparaissaient pas car aucun de ces 4 codes
+      // n'était envoyé à l'API.
+      "D1211", // Vente en articles de sport et loisirs
+      "D1212", // Vente en décoration et équipement du foyer
+      "D1213", // Vente en gros de matériel et équipement
+      "D1214", // Vente en habillement et accessoires de la personne
     ],
   },
   {
