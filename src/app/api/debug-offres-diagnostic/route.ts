@@ -18,6 +18,11 @@ export async function GET(request: Request) {
   const ville = searchParams.get("ville");
   const rayon = parseInt(searchParams.get("rayon") ?? "30", 10);
   const secteursParam = searchParams.get("secteurs");
+  // &sans_filtre_rome=1 : envoie la recherche SANS aucun paramètre "romes", pour voir si l'API
+  // accepte une recherche non filtrée. Utile pour distinguer un problème de couverture des codes
+  // ROME (le nombre d'offres remonte nettement plus sans filtre) d'un problème ailleurs (le
+  // nombre ne change presque pas, donc la limite n'est pas liée aux codes ROME).
+  const sansFiltreRome = searchParams.get("sans_filtre_rome") === "1";
 
   if (!ville) {
     return NextResponse.json({
@@ -43,7 +48,9 @@ export async function GET(request: Request) {
   url.searchParams.set("latitude", geo.latitude.toString());
   url.searchParams.set("longitude", geo.longitude.toString());
   url.searchParams.set("radius", rayon.toString());
-  url.searchParams.set("romes", romes.join(","));
+  if (!sansFiltreRome) {
+    url.searchParams.set("romes", romes.join(","));
+  }
 
   const response = await fetch(url.toString(), {
     headers: { Authorization: `Bearer ${apiKey}` },
@@ -77,14 +84,24 @@ export async function GET(request: Request) {
       return new Date(b.date_publication).getTime() - new Date(a.date_publication).getTime();
     });
 
+  // Vérification de la déduplication ajoutée dans labonnealternance.ts : une même offre
+  // correspondant à plusieurs codes ROME envoyés est renvoyée plusieurs fois par l'API. Ce
+  // compteur permet de voir l'écart avant/après sans avoir à compter à la main.
+  const clesUniques = new Set(
+    jobsResume.map((j) => `${(j.titre ?? "").trim().toLowerCase()}|${(j.entreprise ?? "").trim().toLowerCase()}`)
+  );
+
   return NextResponse.json({
+    recherche_sans_filtre_rome: sansFiltreRome,
+    nombre_offres_uniques_apres_deduplication_titre_entreprise: clesUniques.size,
+    nombre_doublons_detectes: jobsResume.length - clesUniques.size,
     ville_demandee: ville,
     ville_geocodee: geo.label,
     coordonnees: { latitude: geo.latitude, longitude: geo.longitude },
     rayon_km: rayon,
-    secteurs_utilises: secteurKeys,
-    codes_rome_envoyes: romes,
-    nombre_codes_rome: romes.length,
+    secteurs_utilises: sansFiltreRome ? "aucun filtre — tous secteurs confondus" : secteurKeys,
+    codes_rome_envoyes: sansFiltreRome ? "aucun (paramètre romes omis)" : romes,
+    nombre_codes_rome: sansFiltreRome ? 0 : romes.length,
     url_appelee_a_lapi: url.toString(),
 
     // Ce que notre code ignore aujourd'hui — à regarder en priorité pour savoir s'il y a de la
