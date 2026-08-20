@@ -44,6 +44,21 @@ export const SECTOR_OPTIONS: SectorOption[] = [
       "D1212", // Vente en décoration et équipement du foyer
       "D1213", // Vente en gros de matériel et équipement
       "D1214", // Vente en habillement et accessoires de la personne
+      // Ajoutés le 20/08/2026, suite à la comparaison automatisée "nos 8 secteurs vs. aucun
+      // filtre" (outil /api/debug-offres-diagnostic?comparer=1) sur 174 offres manquantes :
+      "D1503", // Management/gestion de rayon produits NON alimentaires — on avait D1502
+      // (rayon alimentaire) mais pas son équivalent non-alimentaire, pourtant très demandé
+      // (ex. "Responsable de rayon" hors alimentaire).
+      "D1505", // Personnel de caisse — explique plusieurs offres manquantes récurrentes
+      // ("Employé commercial caisse & services", "Employé(e) commercial(e) (BTS EN
+      // ALTERNANCE)") : le mot-clé "caisse" n'était couvert par aucun code envoyé jusqu'ici.
+      "D1508", // Encadrement du personnel de caisses — le pendant "management" de D1505,
+      // ajouté par cohérence (comme D1502/D1509 existent déjà côté management).
+      "D1107", // Vente en gros de produits frais — explique "Commercial / Commerciale en
+      // alimentaire en gros" (AYL DISTRIBUTION). Ce code fait partie de la famille D110x
+      // "métiers de bouche" volontairement exclue à l'origine (boulangerie, boucherie...),
+      // mais D1107 correspond en réalité à un poste commercial/vente en gros, pas à un
+      // métier manuel de production alimentaire — il a donc sa place ici.
     ],
   },
   {
