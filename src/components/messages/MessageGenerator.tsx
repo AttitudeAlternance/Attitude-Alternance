@@ -25,7 +25,7 @@ interface MessageGeneratorProps {
   initialApplicationId?: string;
 }
 
-const messageTypes: MessageType[] = ["candidature", "relance", "linkedin", "remerciement"];
+const messageTypes: MessageType[] = ["candidature", "spontanee", "relance", "linkedin", "remerciement"];
 const tones: { value: MessageTone; label: string }[] = [
   { value: "professionnel", label: "Professionnel" },
   { value: "direct", label: "Direct" },
@@ -47,6 +47,7 @@ export function MessageGenerator({
   const [tone, setTone] = useState<MessageTone>("professionnel");
   const [personalInfo, setPersonalInfo] = useState("");
   const [jobDescription, setJobDescription] = useState("");
+  const [companyContext, setCompanyContext] = useState("");
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
@@ -93,6 +94,7 @@ export function MessageGenerator({
         tone,
         personalInfo,
         jobDescription,
+        companyContext,
         cvSummary: profile?.cv_summary,
         firstName: profile?.first_name,
         lastName: profile?.last_name,
@@ -248,15 +250,27 @@ export function MessageGenerator({
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="jobDescription">Description du poste (optionnel)</Label>
-            <Textarea
-              id="jobDescription"
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Collez ici le texte de l'annonce trouvée sur le site d'emploi, pour un message plus personnalisé."
-            />
-          </div>
+          {type === "spontanee" ? (
+            <div>
+              <Label htmlFor="companyContext">Infos sur l&apos;entreprise (optionnel)</Label>
+              <Textarea
+                id="companyContext"
+                value={companyContext}
+                onChange={(e) => setCompanyContext(e.target.value)}
+                placeholder="Ex : lien du site web de l'entreprise, son secteur d'activité, une actualité récente... Aucune offre n'étant publiée, ces infos permettent un message vraiment personnalisé plutôt que générique."
+              />
+            </div>
+          ) : (
+            <div>
+              <Label htmlFor="jobDescription">Description du poste (optionnel)</Label>
+              <Textarea
+                id="jobDescription"
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                placeholder="Collez ici le texte de l'annonce trouvée sur le site d'emploi, pour un message plus personnalisé."
+              />
+            </div>
+          )}
 
           <div>
             <Label htmlFor="personalInfo">Informations personnelles à intégrer</Label>
