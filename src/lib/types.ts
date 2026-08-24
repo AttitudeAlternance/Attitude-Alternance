@@ -54,7 +54,7 @@ export interface Application {
   updated_at: string;
 }
 
-export type ApplicationInput = Omit
+export type ApplicationInput = Omit<
   Application,
   "id" | "user_id" | "created_at" | "updated_at"
 >;
