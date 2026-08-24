@@ -14,6 +14,10 @@ export interface GenerateMessageParams {
   cvSummary?: string;
   previousMessage?: string;
   variantSeed?: number;
+  // Uniquement pour type "spontanee" : contexte libre sur l'entreprise (site web, activité,
+  // actualités récentes...) fourni par l'étudiant, à la place d'une description de poste
+  // puisqu'aucune offre n'est publiée dans ce cas.
+  companyContext?: string;
 }
 
 export interface GenerateMessageResult {
@@ -80,7 +84,7 @@ async function generateWithClaude(params: GenerateMessageParams, apiKey: string)
   return text.trim();
 }
 
-const SYSTEM_PROMPT = `Tu es un assistant qui aide des étudiants à rédiger des messages pour leur recherche d'alternance (mails de candidature, relances, messages LinkedIn, remerciements post-entretien).
+const SYSTEM_PROMPT = `Tu es un assistant qui aide des étudiants à rédiger des messages pour leur recherche d'alternance (mails de candidature en réponse à une offre publiée, candidatures spontanées sans offre publiée, relances, messages LinkedIn, remerciements post-entretien).
 
 Règles impératives :
 - Écris en français, dans un style humain, naturel et fluide — jamais robotique, jamais de formules toutes faites répétées mécaniquement.
@@ -105,6 +109,7 @@ export function buildPrompt(params: GenerateMessageParams): string {
     formation,
     jobDescription,
     cvSummary,
+    companyContext,
   } = params;
 
   return [
@@ -119,6 +124,9 @@ export function buildPrompt(params: GenerateMessageParams): string {
     personalInfo ? `Informations personnelles supplémentaires à intégrer si pertinent : ${personalInfo}` : "",
     jobDescription
       ? `Texte de l'annonce (utilise-le pour comprendre les vraies missions et montrer une correspondance sincère, sans le citer mot pour mot) :\n"""\n${jobDescription}\n"""`
+      : "",
+    companyContext
+      ? `Informations sur l'entreprise fournies par l'étudiant (site web, activité, actualités récentes...) — aucune offre n'étant publiée pour ce type de candidature, utilise ce contexte pour montrer une vraie démarche de recherche et un intérêt sincère pour CETTE entreprise en particulier, sans jamais parler d'une "annonce" ou d'un "poste proposé" :\n"""\n${companyContext}\n"""`
       : "",
     cvSummary
       ? `Résumé du profil du candidat extrait de son CV (utilise-le pour choisir les compétences/expériences les plus pertinentes par rapport au poste) :\n"""\n${cvSummary}\n"""`
@@ -138,6 +146,8 @@ function typeSpecificInstruction(type: MessageType): string {
   switch (type) {
     case "candidature":
       return "Format attendu : longueur d'un vrai mail de candidature (plusieurs paragraphes courts), qui développe sincèrement le lien entre le profil et le poste.";
+    case "spontanee":
+      return "Format attendu : mail de candidature SPONTANÉE — aucune offre publiée ne correspond, donc ne fais jamais référence à une \"annonce\", un \"poste proposé\" ou des \"missions décrites\". Utilise les informations sur l'entreprise fournies (site web, activité, actualités) pour montrer une vraie démarche de recherche ciblée sur CETTE entreprise en particulier, et propose toi-même un poste ou type de mission cohérent avec le profil du candidat et l'activité de l'entreprise.";
     case "linkedin":
       return "Format attendu : message LinkedIn court (3 à 5 phrases, pas de formule de politesse type mail), mais qui prend quand même le temps de faire un vrai lien entre le profil du candidat et le poste, dans les grandes lignes — évite une phrase unique et vague, sans pour autant écrire un mail complet.";
     case "remerciement":
@@ -150,7 +160,9 @@ function typeSpecificInstruction(type: MessageType): string {
 function labelForType(type: MessageType) {
   switch (type) {
     case "candidature":
-      return "mail de candidature spontanée / motivée pour une alternance";
+      return "mail de candidature motivée en réponse à une offre publiée pour une alternance";
+    case "spontanee":
+      return "mail de candidature spontanée pour une alternance (aucune offre publiée ne correspond)";
     case "relance":
       return "mail de relance après une candidature envoyée sans réponse";
     case "linkedin":
@@ -191,6 +203,32 @@ function extractJobHighlight(jobDescription?: string): string | null {
   return `${truncated.slice(0, lastSpace > 40 ? lastSpace : maxLength)}…`;
 }
 
+// Même principe qu'extractJobHighlight, mais pour le contexte "entreprise" libre saisi par
+// l'étudiant (type "spontanee") : mots-clés différents, adaptés à une description d'activité
+// plutôt qu'à une fiche de poste.
+function extractCompanyHighlight(companyContext?: string): string | null {
+  if (!companyContext) return null;
+  const cleaned = companyContext.replace(/\s+/g, " ").trim();
+  if (!cleaned) return null;
+
+  const sentences = cleaned
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 20);
+
+  if (sentences.length === 0) return null;
+
+  const companyKeywords = /(activit|spécialis|entreprise|société|client|marché|innov|conç|développ|conseil|expert|leader|création|fond)/i;
+  const candidate = sentences.find((s) => companyKeywords.test(s)) ?? sentences[0];
+
+  const maxLength = 170;
+  if (candidate.length <= maxLength) return candidate;
+
+  const truncated = candidate.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return `${truncated.slice(0, lastSpace > 40 ? lastSpace : maxLength)}…`;
+}
+
 function generatePlaceholderMessage(params: GenerateMessageParams): string {
   const {
     type,
@@ -205,6 +243,7 @@ function generatePlaceholderMessage(params: GenerateMessageParams): string {
     jobDescription,
     cvSummary,
     variantSeed,
+    companyContext,
   } = params;
 
   const variant = (variantSeed ?? 0) % 2;
@@ -260,6 +299,60 @@ function generatePlaceholderMessage(params: GenerateMessageParams): string {
         motivationLine,
         "",
         "Je me tiens à votre disposition pour un entretien afin de vous présenter plus en détail mon parcours et ma motivation.",
+        "Je vous remercie par avance pour l'attention portée à ma candidature et reste dans l'attente de votre retour.",
+        "",
+        "Cordialement,",
+        signatureBlock,
+      ]
+        .filter(Boolean)
+        .join("\n");
+    }
+
+    case "spontanee": {
+      const companyHighlight = extractCompanyHighlight(companyContext);
+
+      const intro = variant === 0
+        ? toneSentence(
+            tone,
+            `Je me permets de vous contacter en candidature spontanée : je recherche actuellement une alternance en tant que ${role}, et ${company} correspond exactement au type de structure dans laquelle je souhaite évoluer.`,
+            `Je vous contacte en candidature spontanée pour un poste de ${role} en alternance : aucune offre publiée ne correspond actuellement, mais ${company} m'intéresse particulièrement.`,
+            `${company} est une entreprise qui m'inspire, et c'est avec plaisir que je me permets de vous adresser une candidature spontanée pour un poste de ${role} en alternance.`
+          )
+        : toneSentence(
+            tone,
+            `Je me tourne vers vous en candidature spontanée, à la recherche d'une alternance en tant que ${role} au sein d'une entreprise comme ${company}.`,
+            `Aucune offre publiée ne correspond actuellement, mais je souhaite candidater spontanément chez ${company} pour un poste de ${role} en alternance.`,
+            `C'est avec un vif intérêt pour votre activité que je vous adresse cette candidature spontanée pour un poste de ${role} en alternance.`
+          );
+
+      const contextLine = companyHighlight
+        ? `Je me suis renseigné(e) sur votre activité — notamment que ${companyHighlight.charAt(0).toLowerCase()}${companyHighlight.slice(1).replace(/[.!?]+$/, "")} — et c'est précisément ce type de projets qui m'intéresse.`
+        : null;
+
+      const formationLine = formation
+        ? `Actuellement en ${formation}, je recherche une alternance me permettant de mettre en pratique mes compétences tout en continuant à me former sur le terrain.`
+        : `Je recherche actuellement une alternance me permettant de mettre en pratique mes compétences tout en continuant à me former sur le terrain.`;
+
+      const skillsLine = cvLine
+        ? `Mon parcours m'a notamment permis de développer : ${cvLine.toLowerCase()}.`
+        : personalInfo
+          ? `Concrètement, ${personalInfo.charAt(0).toLowerCase()}${personalInfo.slice(1)}`
+          : null;
+
+      const motivationLine = variant === 0
+        ? `Rejoindre ${company} représente pour moi une réelle opportunité de contribuer à vos projets tout en progressant au contact d'une équipe expérimentée.`
+        : `Intégrer ${company} me permettrait de mettre mes compétences au service de vos projets, tout en continuant à progresser aux côtés d'une équipe expérimentée.`;
+
+      return [
+        politeOpen,
+        "",
+        intro,
+        contextLine,
+        formationLine,
+        skillsLine,
+        motivationLine,
+        "",
+        "Je me tiens à votre disposition pour un entretien afin de vous présenter plus en détail mon parcours et ma motivation, même en l'absence de poste ouvert à ce jour.",
         "Je vous remercie par avance pour l'attention portée à ma candidature et reste dans l'attente de votre retour.",
         "",
         "Cordialement,",
