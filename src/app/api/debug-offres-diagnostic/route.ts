@@ -22,6 +22,25 @@ interface JobResume {
   titre: string | null;
   entreprise: string | null;
   date_publication: string | null;
+  // Codes ROME réellement attribués à l'offre par l'API elle-même — ajouté le 01/09/2026 pour
+  // arrêter de DEVINER à partir du titre pourquoi une offre est "manquante" et voir la vraie
+  // cause : soit ces codes ne sont vraiment dans aucun de nos secteurs (vrai manque à combler),
+  // soit ils y sont déjà et l'offre a une autre explication (bug de dédoublonnage, décalage de
+  // dates, etc.). La forme exacte du champ dans la réponse brute n'étant pas garantie (chaîne
+  // simple ou objet {code, label}), on gère les deux cas défensivement (voir extraireCodesRome).
+  codes_rome: string[];
+}
+
+// L'API peut renvoyer les codes ROME de plusieurs façons selon les endpoints/versions :
+// tantôt une simple liste de chaînes (["D1502"]), tantôt une liste d'objets ({code, label}).
+// On normalise vers une liste de chaînes quoi qu'il arrive, sans jamais planter si le champ
+// est absent ou dans un format inattendu.
+function extraireCodesRome(offer: any): string[] {
+  const brut = offer?.rome_codes ?? offer?.romes ?? offer?.rome ?? null;
+  if (!Array.isArray(brut)) return [];
+  return brut
+    .map((item: any) => (typeof item === "string" ? item : item?.code ?? item?.rome ?? null))
+    .filter((code: unknown): code is string => typeof code === "string" && code.length > 0);
 }
 
 function cleKey(j: JobResume): string {
@@ -59,6 +78,7 @@ async function chercherOffres(
     titre: j?.offer?.title ?? null,
     entreprise: j?.workplace?.name ?? j?.workplace?.brand ?? j?.workplace?.legal_name ?? null,
     date_publication: j?.offer?.publication?.creation ?? null,
+    codes_rome: extraireCodesRome(j?.offer),
   }));
 
   return { jobsResume, url: url.toString() };
@@ -103,13 +123,19 @@ export async function GET(request: Request) {
     if ("erreur" in sansFiltre) return NextResponse.json(sansFiltre, { status: sansFiltre.statut_http });
 
     const clesCouvertes = new Set(avecSecteurs.jobsResume.map(cleKey));
+    const romesCouvertsSet = new Set(romesTousSecteurs);
     const seenManquantes = new Set<string>();
-    const manquantes: JobResume[] = [];
+    const manquantes: (JobResume & { anomalie_code_deja_couvert: boolean })[] = [];
     for (const j of sansFiltre.jobsResume) {
       const cle = cleKey(j);
       if (clesCouvertes.has(cle) || seenManquantes.has(cle)) continue;
       seenManquantes.add(cle);
-      manquantes.push(j);
+      // Si au moins un des codes ROME réels de cette offre fait DÉJÀ partie de nos 8 secteurs,
+      // ce n'est pas un manque de code ROME — l'offre a disparu pour une autre raison (à
+      // investiguer spécifiquement : dédoublonnage, décalage de date, etc.). true = anomalie
+      // à creuser en priorité ; false = vrai candidat à un nouveau code ROME.
+      const anomalie = j.codes_rome.some((code) => romesCouvertsSet.has(code));
+      manquantes.push({ ...j, anomalie_code_deja_couvert: anomalie });
     }
     manquantes.sort((a, b) => {
       if (!a.date_publication) return 1;
@@ -119,6 +145,7 @@ export async function GET(request: Request) {
 
     const uniquesAvecSecteurs = new Set(avecSecteurs.jobsResume.map(cleKey)).size;
     const uniquesSansFiltre = new Set(sansFiltre.jobsResume.map(cleKey)).size;
+    const nombreAnomalies = manquantes.filter((m) => m.anomalie_code_deja_couvert).length;
 
     return NextResponse.json({
       ville_geocodee: geo.label,
@@ -126,7 +153,8 @@ export async function GET(request: Request) {
       nombre_offres_uniques_avec_nos_8_secteurs: uniquesAvecSecteurs,
       nombre_offres_uniques_sans_aucun_filtre: uniquesSansFiltre,
       nombre_offres_manquantes: manquantes.length,
-      note: "Cette liste peut inclure des offres légitimement hors du périmètre du site (boulangerie, BTP, aéronautique, santé, esthétique...) — à trier à l'œil pour ne garder que celles qui concernent vraiment Commerce/Marketing/Communication/RH/Informatique/Compta/Admin/Immobilier.",
+      nombre_anomalies_code_deja_couvert: nombreAnomalies,
+      note: "Chaque offre manquante a maintenant son champ codes_rome (les vrais codes envoyés par l'API) et anomalie_code_deja_couvert (true = un de ces codes est déjà dans nos 8 secteurs, donc ce n'est PAS un manque de code ROME — à investiguer autrement ; false = vrai candidat à un nouveau code ROME, à vérifier avant ajout). Le reste de la liste peut aussi inclure des offres légitimement hors périmètre (boulangerie, BTP, aéronautique, santé, esthétique...).",
       offres_manquantes: manquantes,
     });
   }
