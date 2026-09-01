@@ -9,6 +9,23 @@
 // rement exclus : les codes trop spécialisés/manuels hors du profil visé par nos étudiants
 // (ex : M1609 secrétariat médical, D1101-D1107 métiers de bouche, E12xx/E13xx photo-labo et
 // impression industrielle).
+//
+// MISE À JOUR DU 01/09/2026 — changement de méthode : l'outil de diagnostic
+// (/api/debug-offres-diagnostic?comparer=1) a été modifié pour afficher, pour chaque offre
+// manquante, le ou les codes ROME RÉELLEMENT envoyés par l'API elle-même (champ "codes_rome"),
+// au lieu de deviner le bon code à partir du seul intitulé du poste. Résultat sur le test du
+// 01/09/2026 (Bordeaux, 15 km) : aucune des 103 offres manquantes ne portait un code déjà présent
+// dans nos secteurs — donc pas de bug caché côté dédoublonnage/logique de recherche, seulement de
+// vrais codes ROME encore absents de la liste. Ça a aussi révélé que plusieurs offres bien
+// réelles et clairement dans nos secteurs (contrôle de gestion, communication digitale, référencement SEO,
+// administration réseau, data analyste...) portent des codes ROME qui n'existent dans AUCUN des
+// référentiels ROME publics consultés (blocsdecompetences.org, rome.adem.etat.lu, listes PDF
+// régionales) — signe probable que La bonne alternance utilise une version plus récente et plus
+// détaillée de la nomenclature ROME (ROME 4.0) que ces sites tiers n'ont pas encore répertoriée.
+// Pour ces codes-là, la preuve retenue est donc double : le code exact tel qu'envoyé par l'API
+// sur CETTE offre précise, recoupé avec l'intitulé réel du poste (ex. "Alternance -
+// Administrateur Réseau & Sécurité" → M1830) — repéré comme tel dans chaque commentaire ci-
+// dessous plutôt que présenté comme vérifié via une fiche ROME officielle.
 export interface SectorOption {
   key: string;
   label: string;
@@ -59,6 +76,14 @@ export const SECTOR_OPTIONS: SectorOption[] = [
       // "métiers de bouche" volontairement exclue à l'origine (boulangerie, boucherie...),
       // mais D1107 correspond en réalité à un poste commercial/vente en gros, pas à un
       // métier manuel de production alimentaire — il a donc sa place ici.
+      // Ajoutés le 01/09/2026, via le code ROME réel renvoyé par l'API (voir note en tête de
+      // fichier) :
+      "D1221", // Vente de produits culturels et ludiques — confirmé via une fiche ROME
+      // officielle (trouver-formation.fr) : couvre entre autres la vente en magasin de jouets
+      // ("Conseillère de vente en magasin de jouets" — AUREIS FORMATION).
+      "D1438", // Code renvoyé par l'API pour "Chargé(e) de mission cross-merchandising" chez
+      // E.Leclerc (Brico) — absent des référentiels ROME publics consultés (probable code
+      // ROME 4.0 récent), mais l'intitulé du poste confirme un rôle de merchandising/commerce.
     ],
   },
   {
@@ -87,6 +112,11 @@ export const SECTOR_OPTIONS: SectorOption[] = [
       "E1108", // Traduction, interprétariat
       "E1401", // Développement et promotion publicitaire
       "E1402", // Élaboration de plan média
+      // Ajoutés le 01/09/2026, via le code ROME réel renvoyé par l'API (voir note en tête de
+      // fichier) — absents des référentiels ROME publics consultés (probables codes ROME 4.0
+      // récents), confirmés par l'intitulé du poste correspondant :
+      "E1112", // Code renvoyé pour "Chargé(e) de communication digitale" (HECODIS).
+      "E1405", // Code renvoyé pour "Chargé(e) de référencement SEO-GEO" (HUMAN IMMOBILIER).
     ],
   },
   {
@@ -96,6 +126,10 @@ export const SECTOR_OPTIONS: SectorOption[] = [
       "M1501", // Assistanat en ressources humaines
       "M1502", // Développement des ressources humaines
       "M1503", // Management des ressources humaines
+      // Ajouté le 01/09/2026 : code renvoyé par l'API pour "Assistant(e) paie" (EBBS-BUSINESS
+      // SCHOOL) — absent des référentiels ROME publics consultés (probable code ROME 4.0
+      // récent), confirmé par l'intitulé du poste (gestion de la paie).
+      "M1507",
     ],
   },
   {
@@ -109,6 +143,12 @@ export const SECTOR_OPTIONS: SectorOption[] = [
       "M1805", // Études et développement informatique
       "M1806", // Expertise et support technique en systèmes d'information
       "M1810", // Production et exploitation de systèmes d'information
+      // Ajoutés le 01/09/2026, via le code ROME réel renvoyé par l'API (voir note en tête de
+      // fichier) — absents des référentiels ROME publics consultés (probables codes ROME 4.0
+      // récents), confirmés par l'intitulé du poste correspondant :
+      "M1830", // Code renvoyé pour "Administrateur Réseau & Sécurité" (FAYAT IT).
+      "M1851", // Code renvoyé pour "Data analyste (Alternant)" (AIRBUS).
+      "M1886", // Code renvoyé pour "Consultant Fonctionnel Web" (FAYAT IT).
     ],
   },
   {
@@ -122,6 +162,10 @@ export const SECTOR_OPTIONS: SectorOption[] = [
       "M1205", // Direction administrative et financière
       "M1206", // Management de groupe ou de service comptable
       "M1207", // Trésorerie et financement
+      // Ajouté le 01/09/2026 : "Responsable contrôle de gestion" — confirmé via une fiche ROME
+      // officielle (mescoachsreconversion.fr/metier/m1208). Coexiste avec M1204 (Contrôle de
+      // gestion) : les deux sont envoyés, l'API semble utiliser M1208 pour certaines offres.
+      "M1208",
     ],
   },
   {
@@ -135,6 +179,10 @@ export const SECTOR_OPTIONS: SectorOption[] = [
       "M1606", // Saisie de données
       "M1607", // Secrétariat
       "M1608", // Secrétariat comptable
+      // Ajouté le 01/09/2026 : code renvoyé par l'API pour "Assistant administratif paie"
+      // (GROUPE NICOLLIN) — absent des référentiels ROME publics consultés (probable code
+      // ROME 4.0 récent), confirmé par l'intitulé du poste.
+      "M1621",
     ],
   },
   {
