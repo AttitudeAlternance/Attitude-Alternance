@@ -48,6 +48,7 @@ export function ApplicationsBoard({
   const [prefillValue, setPrefillValue] = useState<Partial<ApplicationInput> | null>(null);
   const [deletingApp, setDeletingApp] = useState<Application | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showImportTip, setShowImportTip] = useState(false);
 
   const supabase = createClient();
   const router = useRouter();
@@ -73,6 +74,27 @@ export function ApplicationsBoard({
     router.replace("/dashboard/applications");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Rappel ponctuel vers la page "Import express" (raccourci pour ajouter une candidature en 20
+  // secondes), masque definitivement une fois ferme par l'utilisateur (memorise dans le navigateur).
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("aa_import_express_tip_dismissed")) {
+        setShowImportTip(true);
+      }
+    } catch {
+      setShowImportTip(true);
+    }
+  }, []);
+
+  function dismissImportTip() {
+    setShowImportTip(false);
+    try {
+      localStorage.setItem("aa_import_express_tip_dismissed", "1");
+    } catch {
+      // ignore
+    }
+  }
 
   const filtered = useMemo(() => {
     let list = [...applications];
@@ -210,6 +232,25 @@ export function ApplicationsBoard({
           </Link>{" "}
           pour un suivi illimité.
         </p>
+      )}
+
+      {showImportTip && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3">
+          <p className="text-xs font-medium text-primary-600">
+            Astuce : installe le raccourci{" "}
+            <Link href="/dashboard/import-express" className="underline">
+              Import express
+            </Link>{" "}
+            pour ajouter une candidature en 20 secondes depuis n&apos;importe quelle offre (LinkedIn, Indeed...).
+          </p>
+          <button
+            type="button"
+            onClick={dismissImportTip}
+            className="shrink-0 text-xs font-medium text-primary-500/70 transition-colors hover:text-primary-600"
+          >
+            Fermer
+          </button>
+        </div>
       )}
 
       {applications.length === 0 ? (
