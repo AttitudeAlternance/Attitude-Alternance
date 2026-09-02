@@ -8,6 +8,7 @@ import { Logo } from "@/components/layout/PublicNavbar";
 const links = [
   { href: "/dashboard", label: "Vue d'ensemble", icon: GridIcon },
   { href: "/dashboard/applications", label: "Mes candidatures", icon: TableIcon },
+  { href: "/dashboard/import-express", label: "Import express", icon: BoltIcon },
   { href: "/dashboard/offers", label: "Offres d'alternance", icon: SearchIcon },
   { href: "/dashboard/messages", label: "Générateur IA", icon: SparkleIcon },
   { href: "/dashboard/interview-prep", label: "Préparation entretien", icon: MicIcon },
@@ -157,6 +158,13 @@ function UserIcon(props: React.SVGProps<SVGSVGElement>) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
       <circle cx="12" cy="8" r="4" />
       <path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6" strokeLinecap="round" />
+    </svg>
+  );
+}
+function BoltIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M13 3 5 13h5l-1 8 8-11h-5l1-7Z" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
