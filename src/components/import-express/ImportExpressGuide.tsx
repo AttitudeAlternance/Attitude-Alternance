@@ -133,7 +133,7 @@ const BOOKMARKLET_CODE_B64 =
   "dSk7IHEuc2V0KCdwcmVmaWxsRGVzY3JpcHRpb24nLHgpOyB3aW5kb3cub3BlbihiYXNlKyc/JytxLnRvU3RyaW5nKCksJ19ibGFu" +
   "aycpOyB9KSgpOw==";
 
-function decodeBase64(b64) {
+function decodeBase64(b64: string): string {
   if (typeof atob === "function") return atob(b64);
   return Buffer.from(b64, "base64").toString("binary");
 }
