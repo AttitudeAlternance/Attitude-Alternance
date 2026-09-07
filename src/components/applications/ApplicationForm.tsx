@@ -1,18 +1,14 @@
 "use client";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea, Select, FieldHint } from "@/components/ui/Form";
 import { addBusinessDays } from "@/lib/utils";
 import { APPLICATION_STATUSES, STATUS_LABELS, type Application, type ApplicationInput } from "@/lib/types";
-
 // Nombre de jours ouvrés recommandé avant une première relance après candidature
 const RECOMMENDED_FOLLOWUP_DAYS = 7;
-
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
-
 interface ApplicationFormProps {
   initialValue?: Application | null;
   // Pré-remplissage partiel, utilisé notamment depuis la page "Offres d'alternance" : à la
@@ -22,7 +18,6 @@ interface ApplicationFormProps {
   onSubmit: (values: ApplicationInput) => Promise<void>;
   onCancel: () => void;
 }
-
 // Pour une nouvelle candidature, on considère qu'elle est faite au moment de l'ajout :
 // la date du jour et la relance suggérée sont donc préremplies automatiquement.
 function buildEmptyValue(): ApplicationInput {
@@ -40,7 +35,6 @@ function buildEmptyValue(): ApplicationInput {
     job_description: "",
   };
 }
-
 export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: ApplicationFormProps) {
   const [values, setValues] = useState<ApplicationInput>(
     initialValue
@@ -62,7 +56,6 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
   // Le contact et l'email sont un peu moins essentiels : repliés par défaut à l'ajout,
   // ouverts directement en modification puisqu'ils sont probablement déjà remplis.
   const [showDetails, setShowDetails] = useState(Boolean(initialValue));
-
   const [emailDomain, setEmailDomain] = useState("");
   const [findingEmail, setFindingEmail] = useState(false);
   const [emailBest, setEmailBest] = useState<string | null>(null);
@@ -70,21 +63,15 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
   const [emailConfidence, setEmailConfidence] = useState<"estimee" | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
-  const [fetchingOffer, setFetchingOffer] = useState(false);
-  const [fetchOfferError, setFetchOfferError] = useState<string | null>(null);
-  const [fetchOfferSuccess, setFetchOfferSuccess] = useState(false);
-
   function update<K extends keyof ApplicationInput>(key: K, value: ApplicationInput[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
   }
-
   async function handleFindEmail() {
     setEmailError(null);
     setEmailAlternatives([]);
     setEmailConfidence(null);
     setEmailBest(null);
     setCopiedAll(false);
-
     const nameParts = (values.linkedin_contact ?? "").trim().split(/\s+/);
     if (!emailDomain.trim()) {
       setEmailError("Renseignez le domaine du site de l'entreprise (ex : entreprise.fr).");
@@ -94,10 +81,8 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
       setEmailError("Renseignez le prénom et le nom du contact dans le champ ci-dessus (ex : Sophie Martin).");
       return;
     }
-
     const [firstName, ...rest] = nameParts;
     const lastName = rest.join(" ");
-
     setFindingEmail(true);
     try {
       const res = await fetch("/api/find-email", {
@@ -106,12 +91,10 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
         body: JSON.stringify({ domain: emailDomain, firstName, lastName }),
       });
       const data = await res.json();
-
       if (!res.ok) {
         setEmailError(data.error || "Recherche impossible.");
         return;
       }
-
       update("contact_email", data.best.email);
       setEmailBest(data.best.email);
       setEmailConfidence(data.best.confidence);
@@ -122,7 +105,6 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
       setFindingEmail(false);
     }
   }
-
   async function handleCopyAllEmails() {
     const allEmails = [emailBest, ...emailAlternatives].filter(Boolean) as string[];
     if (allEmails.length === 0) return;
@@ -130,39 +112,6 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
     setCopiedAll(true);
     setTimeout(() => setCopiedAll(false), 2500);
   }
-
-  async function handleFetchOffer() {
-    setFetchOfferError(null);
-    setFetchOfferSuccess(false);
-
-    if (!values.offer_url) {
-      setFetchOfferError("Renseignez d'abord le lien de l'offre ci-dessus.");
-      return;
-    }
-
-    setFetchingOffer(true);
-    try {
-      const res = await fetch("/api/fetch-offer", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ url: values.offer_url }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setFetchOfferError(data.error || "Récupération impossible.");
-        return;
-      }
-
-      update("job_description", data.text);
-      setFetchOfferSuccess(true);
-    } catch {
-      setFetchOfferError("Une erreur est survenue. Copiez-collez le texte de l'offre manuellement.");
-    } finally {
-      setFetchingOffer(false);
-    }
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -181,9 +130,7 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
       setLoading(false);
     }
   }
-
   const allFoundEmails = [emailBest, ...emailAlternatives].filter(Boolean) as string[];
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* --- Essentiel : entreprise, poste, statut, et l'offre (pour générer un bon message ensuite) --- */}
@@ -209,7 +156,6 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
           />
         </div>
       </div>
-
       <div>
         <Label htmlFor="status">Statut</Label>
         <Select
@@ -224,30 +170,24 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
           ))}
         </Select>
       </div>
-
       <div>
         <Label htmlFor="offer_url">Lien de l&apos;offre (optionnel)</Label>
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            id="offer_url"
-            type="url"
-            value={values.offer_url ?? ""}
-            onChange={(e) => update("offer_url", e.target.value)}
-            placeholder="https://..."
-            className="flex-1 min-w-[200px]"
-          />
-          <Button type="button" variant="secondary" size="sm" onClick={handleFetchOffer} disabled={fetchingOffer}>
-            {fetchingOffer ? "Lecture..." : "↓ Récupérer automatiquement"}
-          </Button>
-        </div>
-        {fetchOfferError && <p className="mt-1.5 text-xs text-warn">{fetchOfferError}</p>}
-        {fetchOfferSuccess && (
-          <p className="mt-1.5 text-xs text-success">
-            ✓ Texte récupéré et ajouté dans « Description de l&apos;offre » ci-dessous.
-          </p>
-        )}
+        <Input
+          id="offer_url"
+          type="url"
+          value={values.offer_url ?? ""}
+          onChange={(e) => update("offer_url", e.target.value)}
+          placeholder="https://..."
+        />
+        <FieldHint>
+          Astuce : le raccourci{" "}
+          <a href="/dashboard/import-express" target="_blank" className="font-medium text-primary hover:underline">
+            Import express
+          </a>{" "}
+          pré-remplit directement ce formulaire (lien, description de l&apos;offre...) depuis n&apos;importe quelle
+          offre, en un clic.
+        </FieldHint>
       </div>
-
       <div>
         <Label htmlFor="job_description">Description de l&apos;offre (optionnel)</Label>
         <Textarea
@@ -260,7 +200,6 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
         <FieldHint>
           Utilisée automatiquement pour générer un message ou calculer un score de correspondance avec votre CV.
         </FieldHint>
-
         {values.job_description && (
           <p className="mt-2 text-xs text-muted">
             💡 Un doute sur cette offre ?{" "}
@@ -270,7 +209,6 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
           </p>
         )}
       </div>
-
       {!showDetails && (
         <button
           type="button"
@@ -280,7 +218,6 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
           + Ajouter le contact et une date de relance personnalisée (optionnel)
         </button>
       )}
-
       {/* --- Optionnel : contact, email, dates --- */}
       {showDetails && (
         <div className="space-y-4 rounded-2xl border border-line bg-paper/40 p-4">
@@ -294,7 +231,6 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
               Masquer
             </button>
           </div>
-
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="applied_at">Date de candidature</Label>
@@ -326,7 +262,6 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
               </FieldHint>
             </div>
           </div>
-
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="linkedin_contact">Contact (nom du recruteur)</Label>
@@ -348,7 +283,6 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
               />
             </div>
           </div>
-
           <div className="rounded-xl border border-dashed border-line bg-white p-4">
             <p className="text-sm font-medium text-ink">🔍 Trouver l&apos;email du contact</p>
             <p className="mt-1 text-xs text-muted">
@@ -368,15 +302,12 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
                 {findingEmail ? "Recherche..." : "Trouver l'email"}
               </Button>
             </div>
-
             {emailError && <p className="mt-2 text-xs text-danger">{emailError}</p>}
-
             {emailConfidence && (
               <div className="mt-3 rounded-lg bg-paper/60 p-3">
                 <p className="text-xs font-medium text-warn">
                   ⚠ Adresse estimée à partir des schémas les plus courants (non vérifiée), insérée dans le champ ci-dessus. Vérifiez-la avant tout envoi important.
                 </p>
-
                 {allFoundEmails.length > 1 && (
                   <div className="mt-2 rounded-lg bg-primary-50 p-3">
                     <p className="text-xs text-primary-600">
@@ -389,7 +320,6 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
                     </Button>
                   </div>
                 )}
-
                 {emailAlternatives.length > 0 && (
                   <div className="mt-3">
                     <p className="text-xs text-muted">Ou choisissez une adresse précise :</p>
@@ -410,7 +340,6 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
               </div>
             )}
           </div>
-
           <div>
             <Label htmlFor="comment">Commentaire</Label>
             <Textarea
@@ -422,7 +351,6 @@ export function ApplicationForm({ initialValue, prefill, onSubmit, onCancel }: A
           </div>
         </div>
       )}
-
       <div className="flex justify-end gap-2.5 pt-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
           Annuler
