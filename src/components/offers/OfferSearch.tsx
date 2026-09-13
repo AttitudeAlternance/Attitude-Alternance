@@ -292,14 +292,8 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
                       : ""
                   }.`}
             </p>
-            {realOffers.length > 0 && (
-              <div className="space-y-3">{realOffers.map((offer) => renderOfferCard(offer))}</div>
-            )}
-            {realOffers.length === 0 && spontaneousOffers.length === 0 && offers.length > 0 && (
-              <div className="space-y-3">{offers.map((offer) => renderOfferCard(offer))}</div>
-            )}
             {spontaneousOffers.length > 0 && (
-              <div className="mt-6">
+              <div className="mb-5">
                 <button
                   type="button"
                   onClick={() => setShowSpontaneous((prev) => !prev)}
@@ -314,8 +308,7 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
                 </button>
                 <p className="mt-2 text-xs text-muted">
                   Entreprises à proximité qui n&apos;ont pas publié d&apos;offre d&apos;alternance, mais où une
-                  candidature spontanée peut être pertinente. À explorer une fois les offres publiées ci-dessus
-                  passées en revue.
+                  candidature spontanée peut être pertinente.
                 </p>
                 {showSpontaneous && (
                   <div className="mt-3 space-y-3">
@@ -323,6 +316,12 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
                   </div>
                 )}
               </div>
+            )}
+            {realOffers.length > 0 && (
+              <div className="space-y-3">{realOffers.map((offer) => renderOfferCard(offer))}</div>
+            )}
+            {realOffers.length === 0 && spontaneousOffers.length === 0 && offers.length > 0 && (
+              <div className="space-y-3">{offers.map((offer) => renderOfferCard(offer))}</div>
             )}
           </div>
         );
