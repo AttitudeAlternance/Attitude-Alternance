@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
@@ -9,14 +8,12 @@ import { SECTOR_OPTIONS, SEARCH_RADIUS_OPTIONS, sectorsToRomeCodes } from "@/lib
 import { geocodeCity, type GeocodedLocation } from "@/lib/geocode";
 import { createClient } from "@/lib/supabase/client";
 import type { OfferResult } from "@/lib/labonnealternance";
-
 // Désactivé temporairement : l'endpoint job/v1/apply de La bonne alternance renvoie une 403
 // ("Vous n'êtes pas autorisé à accéder à cette ressource") — notre clé API n'a pas encore
 // l'habilitation nécessaire pour envoyer des candidatures pour le compte des étudiants.
 // Demande envoyée à La bonne alternance le 16/08/2026. Repasser à `true` dès que l'accès est
 // confirmé — tout le reste du code (bouton, appel API, route /api/offers/apply) est inchangé.
 const ONE_CLICK_APPLY_ENABLED = false;
-
 interface OfferSearchProps {
   userId: string;
   initialCity: string;
@@ -24,7 +21,6 @@ interface OfferSearchProps {
   initialRadius: number;
   initialNotify: boolean;
 }
-
 export function OfferSearch({ userId, initialCity, initialSectors, initialRadius, initialNotify }: OfferSearchProps) {
   const [cityInput, setCityInput] = useState(initialCity);
   const [selectedSectors, setSelectedSectors] = useState<string[]>(initialSectors);
@@ -39,12 +35,11 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
   const [hasSearched, setHasSearched] = useState(false);
   const [applyStatus, setApplyStatus] = useState<Record<string, "loading" | "success" | "error">>({});
   const [applyError, setApplyError] = useState<Record<string, string>>({});
+  const [showSpontaneous, setShowSpontaneous] = useState(false);
   const supabase = createClient();
-
   function toggleSector(key: string) {
     setSelectedSectors((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   }
-
   // Enregistre la préférence ET les critères actuels — appelée à la fois quand on coche/décoche
   // la case, et après chaque recherche réussie tant que la case est cochée. C'est ce qui garantit
   // que l'alerte du lendemain porte toujours sur la dernière recherche affichée à l'écran, jamais
@@ -53,23 +48,19 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
     setNotifyNewOffers(checked);
     setNotifySaved(false);
     setSavingNotify(true);
-
     const payload: Record<string, unknown> = { id: userId, notify_new_offers: checked };
     if (checked) {
       payload.target_city = cityInput.trim();
       payload.target_sectors = selectedSectors;
       payload.search_radius = radius;
     }
-
     const { error: saveError } = await supabase.from("profiles").upsert(payload);
     setSavingNotify(false);
     if (!saveError) setNotifySaved(true);
   }
-
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-
     if (!cityInput.trim()) {
       setError("Indiquez une ville ou un code postal.");
       return;
@@ -78,7 +69,6 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
       setError("Sélectionnez au moins un secteur.");
       return;
     }
-
     setLoading(true);
     setHasSearched(true);
     try {
@@ -89,7 +79,6 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
         return;
       }
       setLocation(geo);
-
       const romes = sectorsToRomeCodes(selectedSectors);
       const params = new URLSearchParams({
         lat: geo.latitude.toString(),
@@ -97,17 +86,14 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
         radius: radius.toString(),
       });
       romes.forEach((code) => params.append("rome", code));
-
       const res = await fetch(`/api/offers/search?${params.toString()}`);
       const data = await res.json();
-
       if (!res.ok) {
         setError(data.error || "Impossible de récupérer les offres pour le moment.");
         setOffers(null);
         return;
       }
       setOffers(data.offers);
-
       if (notifyNewOffers) {
         await syncNotificationPreference(true);
       }
@@ -118,7 +104,72 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
       setLoading(false);
     }
   }
-
+  function renderOfferCard(offer: OfferResult) {
+    const status = applyStatus[offer.id];
+    return (
+      <Card key={offer.id}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-sm font-semibold text-ink">{offer.title}</p>
+            <p className="mt-0.5 text-sm text-muted">
+              {offer.company}
+              {offer.city ? ` · ${offer.city}` : ""}
+            </p>
+            {offer.isSpontaneous && (
+              <span className="mt-2 inline-block rounded-full bg-accent-50 px-2.5 py-1 text-xs font-medium text-accent-600">
+                À fort potentiel — candidature spontanée conseillée
+              </span>
+            )}
+            {status === "error" && (
+              <p className="mt-2 text-xs text-danger">
+                {applyError[offer.id]}
+                {applyError[offer.id]?.includes("profil") && (
+                  <>
+                    {" "}
+                    <Link href="/dashboard/profile" className="underline">
+                      Compléter mon profil
+                    </Link>
+                  </>
+                )}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-shrink-0 items-center gap-2">
+            {offer.applyUrl && (
+              <a
+                href={offer.applyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Voir l&apos;offre
+              </a>
+            )}
+            {offer.recipientId && ONE_CLICK_APPLY_ENABLED ? (
+              <Button
+                size="sm"
+                variant="accent"
+                onClick={() => handleOneClickApply(offer)}
+                disabled={status === "loading" || status === "success"}
+              >
+                {status === "success"
+                  ? "✓ Candidature envoyée"
+                  : status === "loading"
+                    ? "Envoi..."
+                    : "⚡ Postuler en 1 clic"}
+              </Button>
+            ) : (
+              <Link href={buildAddUrl(offer)}>
+                <Button size="sm" variant="secondary">
+                  + Ajouter à mes candidatures
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  }
   function buildAddUrl(offer: OfferResult) {
     const params = new URLSearchParams({
       prefillCompany: offer.company,
@@ -128,13 +179,10 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
     if (offer.description) params.set("prefillDescription", offer.description);
     return `/dashboard/applications?${params.toString()}`;
   }
-
   async function handleOneClickApply(offer: OfferResult) {
     if (!offer.recipientId) return;
-
     setApplyStatus((prev) => ({ ...prev, [offer.id]: "loading" }));
     setApplyError((prev) => ({ ...prev, [offer.id]: "" }));
-
     try {
       const res = await fetch("/api/offers/apply", {
         method: "POST",
@@ -148,20 +196,17 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
         }),
       });
       const data = await res.json();
-
       if (!res.ok) {
         setApplyStatus((prev) => ({ ...prev, [offer.id]: "error" }));
         setApplyError((prev) => ({ ...prev, [offer.id]: data.error || "Échec de l'envoi." }));
         return;
       }
-
       setApplyStatus((prev) => ({ ...prev, [offer.id]: "success" }));
     } catch {
       setApplyStatus((prev) => ({ ...prev, [offer.id]: "error" }));
       setApplyError((prev) => ({ ...prev, [offer.id]: "Une erreur est survenue pendant l'envoi." }));
     }
   }
-
   return (
     <div className="space-y-6">
       <Card>
@@ -187,7 +232,6 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
               </Select>
             </div>
           </div>
-
           <div>
             <Label>Secteurs</Label>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -210,7 +254,6 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
               })}
             </div>
           </div>
-
           <label className="flex items-start gap-2.5 rounded-xl border border-line px-3.5 py-3">
             <input
               type="checkbox"
@@ -229,94 +272,61 @@ export function OfferSearch({ userId, initialCity, initialSectors, initialRadius
               </span>
             </span>
           </label>
-
           {error && <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger">{error}</p>}
-
           <Button type="submit" disabled={loading}>
             {loading ? "Recherche en cours..." : "Rechercher des offres"}
           </Button>
         </form>
       </Card>
-
-      {hasSearched && !loading && offers && (
-        <div>
-          <p className="mb-3 text-sm text-muted">
-            {offers.length === 0
-              ? "Aucune offre trouvée pour ces critères — essayez d'élargir le rayon ou les secteurs."
-              : `${offers.length} offre(s) trouvée(s) autour de ${location?.label ?? cityInput}.`}
-          </p>
-
-          <div className="space-y-3">
-            {offers.map((offer) => {
-              const status = applyStatus[offer.id];
-              return (
-                <Card key={offer.id}>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-display text-sm font-semibold text-ink">{offer.title}</p>
-                      <p className="mt-0.5 text-sm text-muted">
-                        {offer.company}
-                        {offer.city ? ` · ${offer.city}` : ""}
-                      </p>
-                      {offer.isSpontaneous && (
-                        <span className="mt-2 inline-block rounded-full bg-accent-50 px-2.5 py-1 text-xs font-medium text-accent-600">
-                          À fort potentiel — candidature spontanée conseillée
-                        </span>
-                      )}
-                      {status === "error" && (
-                        <p className="mt-2 text-xs text-danger">
-                          {applyError[offer.id]}
-                          {applyError[offer.id]?.includes("profil") && (
-                            <>
-                              {" "}
-                              <Link href="/dashboard/profile" className="underline">
-                                Compléter mon profil
-                              </Link>
-                            </>
-                          )}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex flex-shrink-0 items-center gap-2">
-                      {offer.applyUrl && (
-                        <a
-                          href={offer.applyUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-medium text-primary hover:underline"
-                        >
-                          Voir l&apos;offre
-                        </a>
-                      )}
-
-                      {offer.recipientId && ONE_CLICK_APPLY_ENABLED ? (
-                        <Button
-                          size="sm"
-                          variant="accent"
-                          onClick={() => handleOneClickApply(offer)}
-                          disabled={status === "loading" || status === "success"}
-                        >
-                          {status === "success"
-                            ? "✓ Candidature envoyée"
-                            : status === "loading"
-                              ? "Envoi..."
-                              : "⚡ Postuler en 1 clic"}
-                        </Button>
-                      ) : (
-                        <Link href={buildAddUrl(offer)}>
-                          <Button size="sm" variant="secondary">
-                            + Ajouter à mes candidatures
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
+      {hasSearched && !loading && offers && (() => {
+        const realOffers = offers.filter((offer) => !offer.isSpontaneous);
+        const spontaneousOffers = offers.filter((offer) => offer.isSpontaneous);
+        return (
+          <div>
+            <p className="mb-3 text-sm text-muted">
+              {offers.length === 0
+                ? "Aucune offre trouvée pour ces critères — essayez d'élargir le rayon ou les secteurs."
+                : `${realOffers.length} offre(s) publiée(s) trouvée(s) autour de ${location?.label ?? cityInput}${
+                    spontaneousOffers.length > 0
+                      ? `, + ${spontaneousOffers.length} suggestion(s) de candidature spontanée`
+                      : ""
+                  }.`}
+            </p>
+            {realOffers.length > 0 && (
+              <div className="space-y-3">{realOffers.map((offer) => renderOfferCard(offer))}</div>
+            )}
+            {realOffers.length === 0 && spontaneousOffers.length === 0 && offers.length > 0 && (
+              <div className="space-y-3">{offers.map((offer) => renderOfferCard(offer))}</div>
+            )}
+            {spontaneousOffers.length > 0 && (
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowSpontaneous((prev) => !prev)}
+                  className="flex w-full items-center justify-between rounded-xl border border-line bg-paper/60 px-4 py-3 text-left"
+                >
+                  <span className="text-sm font-medium text-ink">
+                    Suggestions de candidature spontanée ({spontaneousOffers.length})
+                  </span>
+                  <span className="text-xs font-medium text-primary">
+                    {showSpontaneous ? "Masquer" : "Afficher"}
+                  </span>
+                </button>
+                <p className="mt-2 text-xs text-muted">
+                  Entreprises à proximité qui n&apos;ont pas publié d&apos;offre d&apos;alternance, mais où une
+                  candidature spontanée peut être pertinente. À explorer une fois les offres publiées ci-dessus
+                  passées en revue.
+                </p>
+                {showSpontaneous && (
+                  <div className="mt-3 space-y-3">
+                    {spontaneousOffers.map((offer) => renderOfferCard(offer))}
                   </div>
-                </Card>
-              );
-            })}
+                )}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
