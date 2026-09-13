@@ -65,7 +65,7 @@ export function ApplicationsTable({ applications, onEdit, onDelete }: Applicatio
                 <td className="px-4 py-3 font-medium text-ink">
                   {app.company}
                   {app.offer_url && (
-                    
+                    <a
                       href={app.offer_url}
                       target="_blank"
                       rel="noopener noreferrer"
