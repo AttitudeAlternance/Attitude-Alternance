@@ -2,14 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { ApplicationsBoard } from "@/components/applications/ApplicationsBoard";
 import { FREE_APPLICATIONS_LIMIT } from "@/lib/plan";
 import type { Application } from "@/lib/types";
-
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
 export default async function ApplicationsPage() {
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
-
   const [{ data: applications }, { data: profile }] = await Promise.all([
     supabase
       .from("applications")
@@ -17,11 +14,10 @@ export default async function ApplicationsPage() {
       .order("created_at", { ascending: false }),
     supabase
       .from("profiles")
-      .select("plan, total_applications_created, bonus_applications")
+      .select("plan, total_applications_created, bonus_applications, referral_code")
       .eq("id", userData.user?.id)
       .maybeSingle(),
   ]);
-
   return (
     <div>
       <div className="mb-6">
@@ -30,7 +26,6 @@ export default async function ApplicationsPage() {
           Centralisez et suivez chaque candidature envoyée, de la prise de contact à la réponse finale.
         </p>
       </div>
-
       <ApplicationsBoard
         initialApplications={(applications ?? []) as Application[]}
         userId={userData.user?.id ?? ""}
@@ -38,6 +33,7 @@ export default async function ApplicationsPage() {
         freeLimit={FREE_APPLICATIONS_LIMIT}
         initialTotalCreated={profile?.total_applications_created ?? (applications ?? []).length}
         bonusApplications={profile?.bonus_applications ?? 0}
+        referralCode={profile?.referral_code ?? null}
       />
     </div>
   );
