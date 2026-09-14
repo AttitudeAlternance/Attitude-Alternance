@@ -6,12 +6,10 @@ import { SprintHero } from "@/components/dashboard/SprintHero";
 import { StartupChecklist } from "@/components/dashboard/StartupChecklist";
 import { isOverdue, isDueToday, isThisWeek, computeStreak, getInitials, daysOverdue } from "@/lib/utils";
 import type { Application } from "@/lib/types";
-
 // Empêche la mise en cache de cette page : les statistiques doivent toujours
 // refléter les dernières candidatures ajoutées, même juste après une modification.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
 const QUICK_LINKS = [
   { href: "/dashboard/messages", icon: "✨", label: "Générer un message" },
   { href: "/dashboard/match-score", icon: "🎯", label: "Score de correspondance" },
@@ -19,10 +17,25 @@ const QUICK_LINKS = [
   { href: "/dashboard/resources", icon: "📚", label: "Ressources" },
 ];
 
+// Même dégradé de sévérité que sur la page "Mes candidatures" : neutre pour un
+// léger retard (1-3 jours), orange de 4 à 14 jours, rouge seulement au-delà.
+// "Aujourd'hui" reste distinct et prioritaire, sans jamais être alarmant.
+function getFollowupBadge(late: number, dueToday: boolean): { classes: string; label: string } {
+  if (dueToday) {
+    return { classes: "bg-warn-50 text-warn", label: "Aujourd'hui" };
+  }
+  if (late <= 3) {
+    return { classes: "bg-line/40 text-ink/70", label: `${late}j de retard` };
+  }
+  if (late <= 14) {
+    return { classes: "bg-warn-50 text-warn", label: `${late}j de retard` };
+  }
+  return { classes: "bg-danger-50 text-danger", label: `${late}j de retard` };
+}
+
 export default async function DashboardPage() {
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
-
   const [{ data: profile }, { data: applications }, { count: messageCount }] = await Promise.all([
     supabase
       .from("profiles")
@@ -37,9 +50,7 @@ export default async function DashboardPage() {
       .from("generated_messages")
       .select("*", { count: "exact", head: true }),
   ]);
-
   const apps = (applications ?? []) as Application[];
-
   const pending = apps.filter((a) => ["envoyee", "relance_a_faire"].includes(a.status)).length;
   const interviews = apps.filter((a) => a.status === "entretien_obtenu").length;
   const followupsDue = apps.filter(
@@ -47,9 +58,7 @@ export default async function DashboardPage() {
   );
   const thisWeekCount = apps.filter((a) => isThisWeek(a.applied_at ?? a.created_at)).length;
   const streak = computeStreak(apps.map((a) => a.created_at));
-
   const firstName = profile?.first_name || "";
-
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -60,19 +69,16 @@ export default async function DashboardPage() {
           {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
         </p>
       </div>
-
       <StartupChecklist
         hasCv={Boolean(profile?.cv_summary)}
         hasApplication={apps.length > 0}
         hasMessage={(messageCount ?? 0) > 0}
       />
-
       <SprintHero
         userId={userData.user?.id ?? ""}
         initialGoal={profile?.weekly_goal ?? 5}
         currentCount={thisWeekCount}
       />
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <p className="text-xs font-medium text-muted">En attente de réponse</p>
@@ -111,7 +117,6 @@ export default async function DashboardPage() {
           </div>
         </Card>
       </div>
-
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
@@ -120,7 +125,6 @@ export default async function DashboardPage() {
               Voir tout
             </Link>
           </div>
-
           {followupsDue.length === 0 ? (
             <EmptyState
               title="Aucune relance en attente"
@@ -131,7 +135,7 @@ export default async function DashboardPage() {
               {followupsDue.slice(0, 5).map((app) => {
                 const late = daysOverdue(app.next_followup_at);
                 const dueToday = isDueToday(app.next_followup_at);
-                const severe = late >= 7;
+                const badge = getFollowupBadge(late, dueToday);
                 return (
                   <li
                     key={app.id}
@@ -145,13 +149,9 @@ export default async function DashboardPage() {
                       <p className="truncate text-xs text-muted">{app.role}</p>
                     </div>
                     <span
-                      className={
-                        dueToday || !severe
-                          ? "flex-shrink-0 rounded-full bg-warn-50 px-2.5 py-1 text-xs font-medium text-warn"
-                          : "flex-shrink-0 rounded-full bg-danger-50 px-2.5 py-1 text-xs font-medium text-danger"
-                      }
+                      className={`flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${badge.classes}`}
                     >
-                      {dueToday ? "Aujourd'hui" : `${late}j de retard`}
+                      {badge.label}
                     </span>
                   </li>
                 );
@@ -159,7 +159,6 @@ export default async function DashboardPage() {
             </ul>
           )}
         </Card>
-
         <Card>
           <h2 className="font-display text-base font-semibold text-ink">Accès rapide</h2>
           <div className="mt-4 grid grid-cols-2 gap-2.5">
