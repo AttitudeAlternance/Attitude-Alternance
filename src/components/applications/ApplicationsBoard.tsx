@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,7 +16,6 @@ import {
   type ApplicationInput,
   type ApplicationStatus,
 } from "@/lib/types";
-
 interface ApplicationsBoardProps {
   initialApplications: Application[];
   userId: string;
@@ -25,10 +23,14 @@ interface ApplicationsBoardProps {
   freeLimit: number;
   initialTotalCreated: number;
   bonusApplications: number;
+  // Optionnel : tant que la page appelante ne le transmet pas encore, le rappel de
+  // parrainage reste simplement invisible (aucune régression, aucune erreur de build).
+  referralCode?: string | null;
 }
-
 type SortOrder = "recent" | "ancien" | "relance";
-
+// Les deux moments positifs du parcours où l'on rappelle le lien de parrainage,
+// plutôt que de le laisser uniquement visible dans "Mon profil".
+type ReferralMoment = "created" | "interview";
 export function ApplicationsBoard({
   initialApplications,
   userId,
@@ -36,6 +38,7 @@ export function ApplicationsBoard({
   freeLimit,
   initialTotalCreated,
   bonusApplications,
+  referralCode = null,
 }: ApplicationsBoardProps) {
   const [applications, setApplications] = useState<Application[]>(initialApplications);
   const [totalCreated, setTotalCreated] = useState(initialTotalCreated);
@@ -49,14 +52,20 @@ export function ApplicationsBoard({
   const [deletingApp, setDeletingApp] = useState<Application | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showImportTip, setShowImportTip] = useState(false);
-
+  const [referralMoment, setReferralMoment] = useState<ReferralMoment | null>(null);
+  const [referralCopied, setReferralCopied] = useState(false);
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
   // La limite gratuite s'étend avec les bonus de parrainage.
   const effectiveLimit = freeLimit + bonusApplications;
   const atLimit = plan === "free" && totalCreated >= effectiveLimit;
-
+  const referralLink =
+    referralCode && typeof window !== "undefined"
+      ? `${window.location.origin}/signup?ref=${referralCode}`
+      : referralCode
+        ? `/signup?ref=${referralCode}`
+        : null;
   // Arrivée depuis la page "Offres d'alternance" (bouton "+ Ajouter à mes candidatures") :
   // on ouvre directement la modale de création, pré-remplie avec l'offre choisie, puis on
   // nettoie l'URL pour éviter de rouvrir la modale si la page est rechargée.
@@ -64,7 +73,6 @@ export function ApplicationsBoard({
     const company = searchParams.get("prefillCompany");
     const role = searchParams.get("prefillRole");
     if (!company && !role) return;
-
     openCreateModal({
       company: company ?? "",
       role: role ?? "",
@@ -74,7 +82,6 @@ export function ApplicationsBoard({
     router.replace("/dashboard/applications");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
   // Rappel ponctuel vers la page "Import express" (raccourci pour ajouter une candidature en 20
   // secondes), masque definitivement une fois ferme par l'utilisateur (memorise dans le navigateur).
   useEffect(() => {
@@ -86,7 +93,6 @@ export function ApplicationsBoard({
       setShowImportTip(true);
     }
   }, []);
-
   function dismissImportTip() {
     setShowImportTip(false);
     try {
@@ -95,7 +101,12 @@ export function ApplicationsBoard({
       // ignore
     }
   }
-
+  async function handleCopyReferral() {
+    if (!referralLink) return;
+    await navigator.clipboard.writeText(referralLink);
+    setReferralCopied(true);
+    setTimeout(() => setReferralCopied(false), 2500);
+  }
   const filtered = useMemo(() => {
     let list = [...applications];
     if (statusFilter !== "all") {
@@ -117,7 +128,6 @@ export function ApplicationsBoard({
     });
     return list;
   }, [applications, statusFilter, sortOrder, search]);
-
   function openCreateModal(prefill?: Partial<ApplicationInput>) {
     if (atLimit) {
       setLimitModalOpen(true);
@@ -128,17 +138,16 @@ export function ApplicationsBoard({
     setError(null);
     setModalOpen(true);
   }
-
   function openEditModal(app: Application) {
     setEditingApp(app);
     setPrefillValue(null);
     setError(null);
     setModalOpen(true);
   }
-
   async function handleSubmit(values: ApplicationInput) {
     setError(null);
     if (editingApp) {
+      const wasNotInterview = editingApp.status !== "entretien_obtenu";
       const { data, error } = await supabase
         .from("applications")
         .update(values)
@@ -150,6 +159,11 @@ export function ApplicationsBoard({
         return;
       }
       setApplications((prev) => prev.map((a) => (a.id === editingApp.id ? (data as Application) : a)));
+      // Moment positif : passage en "Entretien obtenu" (uniquement lors de la transition,
+      // pas à chaque enregistrement si le statut était déjà celui-ci).
+      if (referralCode && wasNotInterview && values.status === "entretien_obtenu") {
+        setReferralMoment("interview");
+      }
     } else {
       const { data, error } = await supabase
         .from("applications")
@@ -162,10 +176,13 @@ export function ApplicationsBoard({
       }
       setApplications((prev) => [data as Application, ...prev]);
       setTotalCreated((prev) => prev + 1);
+      // Moment positif : nouvelle candidature envoyée.
+      if (referralCode) {
+        setReferralMoment("created");
+      }
     }
     setModalOpen(false);
   }
-
   async function handleDelete() {
     if (!deletingApp) return;
     const { error } = await supabase.from("applications").delete().eq("id", deletingApp.id);
@@ -174,7 +191,6 @@ export function ApplicationsBoard({
     }
     setDeletingApp(null);
   }
-
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -186,7 +202,6 @@ export function ApplicationsBoard({
               placeholder="Rechercher une entreprise, un poste..."
             />
           </div>
-
           <div className="w-48">
             <Select
               value={statusFilter}
@@ -200,7 +215,6 @@ export function ApplicationsBoard({
               ))}
             </Select>
           </div>
-
           <div className="w-52">
             <Select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as SortOrder)}>
               <option value="recent">Plus récentes</option>
@@ -209,7 +223,6 @@ export function ApplicationsBoard({
             </Select>
           </div>
         </div>
-
         <div className="flex flex-wrap items-center gap-2">
           {plan === "free" && (
             <Link
@@ -222,7 +235,6 @@ export function ApplicationsBoard({
           <Button onClick={() => openCreateModal()}>+ Ajouter une candidature</Button>
         </div>
       </div>
-
       {plan === "free" && totalCreated >= Math.round(effectiveLimit * 0.8) && (
         <p className="mb-4 rounded-lg bg-warn-50 px-3 py-2 text-xs font-medium text-warn">
           {totalCreated}/{effectiveLimit} candidatures utilisées sur l&apos;offre gratuite
@@ -233,7 +245,33 @@ export function ApplicationsBoard({
           pour un suivi illimité.
         </p>
       )}
-
+      {referralMoment && referralLink && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3">
+          <div>
+            <p className="text-xs font-semibold text-primary-600">
+              {referralMoment === "created"
+                ? "Bravo, une candidature de plus dans le suivi ! 🎉"
+                : "Bravo pour cet entretien décroché ! 🎉"}
+            </p>
+            <p className="mt-0.5 text-xs text-primary-600/80">
+              Un ami en recherche d&apos;alternance ? Partagez votre lien de parrainage : vous débloquez chacun 5
+              candidatures supplémentaires.
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button size="sm" variant="secondary" onClick={handleCopyReferral}>
+              {referralCopied ? "Copié ✓" : "Copier le lien"}
+            </Button>
+            <button
+              type="button"
+              onClick={() => setReferralMoment(null)}
+              className="text-xs font-medium text-primary-500/70 transition-colors hover:text-primary-600"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
       {showImportTip && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3">
           <p className="text-xs font-medium text-primary-600">
@@ -252,7 +290,6 @@ export function ApplicationsBoard({
           </button>
         </div>
       )}
-
       {applications.length === 0 ? (
         <EmptyState
           title="Aucune candidature pour le moment"
@@ -278,7 +315,6 @@ export function ApplicationsBoard({
       ) : (
         <ApplicationsTable applications={filtered} onEdit={openEditModal} onDelete={setDeletingApp} />
       )}
-
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -294,7 +330,6 @@ export function ApplicationsBoard({
           onCancel={() => setModalOpen(false)}
         />
       </Modal>
-
       <Modal
         open={Boolean(deletingApp)}
         onClose={() => setDeletingApp(null)}
@@ -312,7 +347,6 @@ export function ApplicationsBoard({
           </Button>
         </div>
       </Modal>
-
       <Modal
         open={limitModalOpen}
         onClose={() => setLimitModalOpen(false)}
