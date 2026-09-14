@@ -39,7 +39,7 @@ export default async function DashboardPage() {
   const [{ data: profile }, { data: applications }, { count: messageCount }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("first_name, weekly_goal, cv_summary")
+      .select("first_name, weekly_goal, cv_summary, plan")
       .eq("id", userData.user?.id)
       .maybeSingle(),
     supabase
@@ -59,15 +59,26 @@ export default async function DashboardPage() {
   const thisWeekCount = apps.filter((a) => isThisWeek(a.applied_at ?? a.created_at)).length;
   const streak = computeStreak(apps.map((a) => a.created_at));
   const firstName = profile?.first_name || "";
+  const plan = (profile?.plan as "free" | "premium") ?? "free";
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold text-ink">
           {firstName ? `Bonjour ${firstName} 👋` : "Bonjour 👋"}
         </h1>
-        <p className="text-sm text-muted">
-          {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          {plan === "free" && (
+            <Link
+              href="/dashboard/profile"
+              className="flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-600 transition-colors hover:bg-primary-100"
+            >
+              ✨ Passer à Étudiant+
+            </Link>
+          )}
+          <p className="text-sm text-muted">
+            {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+          </p>
+        </div>
       </div>
       <StartupChecklist
         hasCv={Boolean(profile?.cv_summary)}
