@@ -1,19 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { AppNavbar, DesktopTopbar } from "@/components/layout/AppNavbar";
-
+import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
   const { data } = await supabase.auth.getUser();
-
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_admin, plan")
+    .select("is_admin, plan, onboarding_dismissed_at")
     .eq("id", data.user?.id)
     .maybeSingle();
-
   const plan = (profile?.plan as "free" | "premium") ?? "free";
-
   return (
     <div className="min-h-screen bg-paper lg:flex">
       {/* Sidebar fixe sur desktop */}
@@ -22,12 +19,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <Sidebar isAdmin={profile?.is_admin ?? false} plan={plan} />
         </div>
       </aside>
-
       <div className="flex-1">
         <AppNavbar email={data.user?.email} isAdmin={profile?.is_admin ?? false} plan={plan} />
         <DesktopTopbar email={data.user?.email} />
         <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
       </div>
+      <OnboardingTour
+        userId={data.user?.id ?? ""}
+        initialDismissed={Boolean(profile?.onboarding_dismissed_at)}
+      />
     </div>
   );
 }
