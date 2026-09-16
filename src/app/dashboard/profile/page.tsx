@@ -4,11 +4,10 @@ import { CvUpload } from "@/components/profile/CvUpload";
 import { PlanCard } from "@/components/profile/PlanCard";
 import { ReferralCard } from "@/components/profile/ReferralCard";
 import { DeleteAccountCard } from "@/components/profile/DeleteAccountCard";
+import { RestartTourLink } from "@/components/profile/RestartTourLink";
 import type { Profile } from "@/lib/types";
-
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
 export default async function ProfilePage({
   searchParams,
 }: {
@@ -16,24 +15,23 @@ export default async function ProfilePage({
 }) {
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
-
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", userData.user?.id)
     .maybeSingle();
-
   const typedProfile = profile as Profile | null;
-
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-ink">Mon profil</h1>
-        <p className="mt-1 text-sm text-muted">
-          Ces informations sont utilisées pour personnaliser vos messages générés par IA.
-        </p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-ink">Mon profil</h1>
+          <p className="mt-1 text-sm text-muted">
+            Ces informations sont utilisées pour personnaliser vos messages générés par IA.
+          </p>
+        </div>
+        <RestartTourLink />
       </div>
-
       <div className="space-y-6">
         <PlanCard
           plan={typedProfile?.plan ?? "free"}
@@ -41,23 +39,21 @@ export default async function ProfilePage({
           stripeConfigured={Boolean(process.env.STRIPE_PRICE_ID)}
           initialWaitlistJoined={Boolean(typedProfile?.waitlist_joined_at)}
         />
-
         <ReferralCard
           referralCode={typedProfile?.referral_code ?? null}
           bonusApplications={typedProfile?.bonus_applications ?? 0}
         />
-
-        <CvUpload
-          initialSummary={typedProfile?.cv_summary ?? null}
-          initialUploadedAt={typedProfile?.cv_uploaded_at ?? null}
-        />
-
+        <div data-tour-id="profile-cv">
+          <CvUpload
+            initialSummary={typedProfile?.cv_summary ?? null}
+            initialUploadedAt={typedProfile?.cv_uploaded_at ?? null}
+          />
+        </div>
         <ProfileForm
           userId={userData.user?.id ?? ""}
           email={userData.user?.email ?? ""}
           initialProfile={typedProfile}
         />
-
         <DeleteAccountCard />
       </div>
     </div>
