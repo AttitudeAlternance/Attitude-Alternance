@@ -232,7 +232,9 @@ export function ApplicationsBoard({
               ✨ Étudiant+ : candidatures illimitées
             </Link>
           )}
-          <Button onClick={() => openCreateModal()}>+ Ajouter une candidature</Button>
+          <div data-tour-id="applications-add">
+            <Button onClick={() => openCreateModal()}>+ Ajouter une candidature</Button>
+          </div>
         </div>
       </div>
       {plan === "free" && totalCreated >= Math.round(effectiveLimit * 0.8) && (
