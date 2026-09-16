@@ -1,10 +1,8 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/layout/PublicNavbar";
-
 const links = [
   { href: "/dashboard", label: "Vue d'ensemble", icon: GridIcon },
   { href: "/dashboard/applications", label: "Mes candidatures", icon: TableIcon },
@@ -17,24 +15,30 @@ const links = [
   { href: "/dashboard/resources", label: "Ressources", icon: BookIcon },
   { href: "/dashboard/profile", label: "Mon profil", icon: UserIcon },
 ];
-
+// Repères utilisés par le tunnel guidé (OnboardingTour) pour savoir quel lien
+// éclairer à chaque étape. Les liens absents de cette liste ne font pas partie
+// du guide.
+const TOUR_IDS: Record<string, string> = {
+  "/dashboard/profile": "profile",
+  "/dashboard/import-express": "import-express",
+  "/dashboard/applications": "applications",
+  "/dashboard/messages": "messages",
+  "/dashboard/interview-prep": "interview-prep",
+};
 interface SidebarProps {
   onNavigate?: () => void;
   isAdmin?: boolean;
   plan?: "free" | "premium";
 }
-
 export function Sidebar({ onNavigate, isAdmin, plan = "free" }: SidebarProps) {
   const pathname = usePathname();
   const allLinks = isAdmin ? [...links, { href: "/dashboard/admin", label: "Admin", icon: GaugeIcon }] : links;
-
   return (
     <div className="flex h-full flex-col gap-6 p-4">
       <Link href="/" className="flex items-center gap-2 px-2 pt-2">
         <Logo />
         <span className="font-display text-base font-semibold text-ink">Attitude Alternance</span>
       </Link>
-
       <nav className="flex flex-1 flex-col gap-1">
         {allLinks.map(({ href, label, icon: Icon }) => {
           const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
@@ -43,6 +47,7 @@ export function Sidebar({ onNavigate, isAdmin, plan = "free" }: SidebarProps) {
               key={href}
               href={href}
               onClick={onNavigate}
+              data-tour-id={TOUR_IDS[href]}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                 active
@@ -56,7 +61,6 @@ export function Sidebar({ onNavigate, isAdmin, plan = "free" }: SidebarProps) {
           );
         })}
       </nav>
-
       {plan === "free" && (
         <Link
           href="/dashboard/profile"
@@ -67,7 +71,6 @@ export function Sidebar({ onNavigate, isAdmin, plan = "free" }: SidebarProps) {
           <p className="mt-1 text-xs text-white/80">Candidatures illimitées et IA sans limite — 5,99€/mois</p>
         </Link>
       )}
-
       <div className="rounded-xl bg-primary-50 p-4">
         <p className="text-xs font-semibold text-primary-600">Objectif du jour</p>
         <p className="mt-1 text-xs text-primary-500/80">
@@ -77,7 +80,6 @@ export function Sidebar({ onNavigate, isAdmin, plan = "free" }: SidebarProps) {
     </div>
   );
 }
-
 function GridIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
