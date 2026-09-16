@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { MessageGenerator } from "@/components/messages/MessageGenerator";
 import type { Application, GeneratedMessage, Profile } from "@/lib/types";
-
 export default async function MessagesPage({
   searchParams,
 }: {
@@ -9,7 +8,6 @@ export default async function MessagesPage({
 }) {
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
-
   const [{ data: profile }, { data: history }, { data: applications }] = await Promise.all([
     supabase
       .from("profiles")
@@ -26,7 +24,6 @@ export default async function MessagesPage({
       .select("*")
       .order("created_at", { ascending: false }),
   ]);
-
   return (
     <div>
       <div className="mb-6">
@@ -35,14 +32,15 @@ export default async function MessagesPage({
           Créez en quelques secondes un mail ou un message LinkedIn prêt à copier-coller.
         </p>
       </div>
-
-      <MessageGenerator
-        profile={profile as Profile | null}
-        userId={userData.user?.id ?? ""}
-        history={(history ?? []) as GeneratedMessage[]}
-        applications={(applications ?? []) as Application[]}
-        initialApplicationId={searchParams.applicationId ?? ""}
-      />
+      <div data-tour-id="messages-page">
+        <MessageGenerator
+          profile={profile as Profile | null}
+          userId={userData.user?.id ?? ""}
+          history={(history ?? []) as GeneratedMessage[]}
+          applications={(applications ?? []) as Application[]}
+          initialApplicationId={searchParams.applicationId ?? ""}
+        />
+      </div>
     </div>
   );
 }
