@@ -182,7 +182,7 @@ export function ImportExpressGuide() {
         >
           <p className="mb-3 text-sm font-medium text-primary-600">&#8595; Glisse ce bouton dans ta barre de favoris &#8595;</p>
           
-            href={BOOKMARKLET_HREF}
+            <a href={BOOKMARKLET_HREF}
             onClick={(e) => e.preventDefault()}
             className="inline-flex cursor-grab select-none items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-pop active:cursor-grabbing"
           >
