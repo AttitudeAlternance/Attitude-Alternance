@@ -176,9 +176,12 @@ export function ImportExpressGuide() {
           HelloWork, Welcome to the Jungle...), un clic ouvre directement la fen&ecirc;tre d&apos;ajout de candidature,
           d&eacute;j&agrave; remplie autant que possible.
         </p>
-        <div className="mt-5 rounded-2xl border border-dashed border-primary-200 bg-primary-50 p-6 text-center">
+        <div
+          data-tour-id="import-express-bookmarklet"
+          className="mt-5 rounded-2xl border border-dashed border-primary-200 bg-primary-50 p-6 text-center"
+        >
           <p className="mb-3 text-sm font-medium text-primary-600">&#8595; Glisse ce bouton dans ta barre de favoris &#8595;</p>
-          <a
+          
             href={BOOKMARKLET_HREF}
             onClick={(e) => e.preventDefault()}
             className="inline-flex cursor-grab select-none items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-pop active:cursor-grabbing"
