@@ -8,6 +8,19 @@ export const runtime = "nodejs";
 
 const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024; // 4 Mo, cohérent avec les limites des fonctions Vercel
 
+// Supabase Storage rejette les clés de fichier contenant des caractères accentués
+// (é, è, à...) ou certains caractères spéciaux (apostrophes, parenthèses...), ce qui
+// provoque une erreur "InvalidKey" à l'upload — indépendamment de la taille du fichier.
+// Beaucoup de CV sont nommés avec des accents ou des espaces (ex: "CV_Camille_Été (final).pdf"),
+// d'où l'intérêt d'assainir uniquement la clé de stockage ; le nom d'origine (fileName)
+// reste inchangé partout ailleurs (affichage, etc.).
+function sanitizeFileName(name: string): string {
+  const withoutAccents = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const safe = withoutAccents.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_");
+  // Garde une longueur raisonnable pour éviter les clés trop longues.
+  return safe.slice(-150) || "cv.pdf";
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = createClient();
@@ -60,12 +73,15 @@ export async function POST(request: Request) {
     }
 
     // --- 2. Sauvegarde du fichier dans le stockage privé de l'utilisateur ---
-    const storagePath = `${userData.user.id}/${Date.now()}-${fileName}`;
+    const storagePath = `${userData.user.id}/${Date.now()}-${sanitizeFileName(fileName)}`;
     const { error: uploadError } = await supabase.storage
       .from("cvs")
       .upload(storagePath, buffer, { contentType: "application/pdf", upsert: true });
 
     if (uploadError) {
+      // Le détail réel (ex: InvalidKey) part dans les logs Vercel pour faciliter
+      // un futur diagnostic, sans exposer de détails techniques à l'utilisateur.
+      console.error("Erreur upload CV vers Supabase Storage :", uploadError);
       return NextResponse.json({ error: "Erreur lors de l'enregistrement du fichier." }, { status: 500 });
     }
 
