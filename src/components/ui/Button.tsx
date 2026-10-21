@@ -23,9 +23,9 @@ const variantStyles: Record<Variant, string> = {
 };
 
 const sizeStyles: Record<Size, string> = {
-  sm: "text-sm px-3 py-1.5 rounded-lg",
-  md: "text-sm px-4 py-2.5 rounded-xl",
-  lg: "text-base px-6 py-3 rounded-xl",
+  sm: "text-sm px-3 py-1.5 rounded-full",
+  md: "text-sm px-4 py-2.5 rounded-full",
+  lg: "text-base px-6 py-3 rounded-full",
 };
 
 // Bouton générique utilisé partout dans l'application.
