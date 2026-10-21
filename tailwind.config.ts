@@ -6,7 +6,7 @@ const config: Config = {
     extend: {
       colors: {
         ink: "#1A1D29",
-        paper: "#F7F7F4",
+        paper: "#FFFFFF",
         primary: {
           DEFAULT: "#2B3A67",
           50: "#EEF1F8",
@@ -44,8 +44,8 @@ const config: Config = {
         line: "#E6E4DE",
       },
       fontFamily: {
-        display: ["var(--font-sora)", "system-ui", "sans-serif"],
-        body: ["var(--font-inter)", "system-ui", "sans-serif"],
+        display: ["var(--font-outfit)", "system-ui", "sans-serif"],
+        body: ["var(--font-figtree)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       borderRadius: {
