@@ -1,8 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Button } from "@/components/ui/Button";
 
-// Section "aperçu" de la landing page, renvoyant vers le guide illustré complet (/guide).
+// Section "aperçu" de la landing page : vidéo de démonstration du produit,
+// avec un lien secondaire vers le guide illustré complet (/guide).
 export function DemoVideo() {
   return (
     <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
@@ -19,20 +18,26 @@ export function DemoVideo() {
 
       <div className="mt-8 overflow-hidden rounded-2xl border border-line bg-white shadow-card">
         <div className="relative aspect-video w-full">
-          <Image
-            src="/guide/06-dashboard.jpg"
-            alt="Aperçu du tableau de bord Attitude Alternance"
-            fill
-            className="object-cover"
+          <video
+            src="/guide/demo-produit.mp4"
+            poster="/guide/demo-produit-poster.jpg"
+            className="h-full w-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls
           />
-          <div className="absolute inset-0 flex items-center justify-center bg-ink/40">
-            <Link href="/guide">
-              <Button size="lg" variant="secondary" className="border-transparent">
-                📖 Voir le guide de démarrage
-              </Button>
-            </Link>
-          </div>
         </div>
+      </div>
+
+      <div className="mt-5 text-center">
+        <Link
+          href="/guide"
+          className="text-sm font-semibold text-primary-500 underline-offset-4 hover:underline"
+        >
+          Voir le guide complet, étape par étape →
+        </Link>
       </div>
     </section>
   );
